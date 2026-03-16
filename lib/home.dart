@@ -6,97 +6,88 @@ class UserDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context0) {
     return Scaffold(
-      backgroundColor: Color(0xFF3130C0),
+      backgroundColor: const Color(0xFF3130C0),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Color(0xFF3130C0),
+        backgroundColor: const Color(0xFF3130C0),
         leading: Image.asset('assets/logo.png', width: 10, height: 10),
-        title: Text('Dashboard'),
+        title: const Text('Dashboard'),
         centerTitle: true,
         actions: <Widget>[
           IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
-              Container(
-                height: 200,
-                width: 200,
-                decoration: const BoxDecoration(
-                  color: Colors.lightBlue,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      offset: Offset(0, 5),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const SizedBox(height: 40),
+            Container(
+              //adjusted size 
+              height: 250,
+              width: 250,
+              decoration: const BoxDecoration(
+                color: Colors.lightBlue,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '75%',
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Center(
-                      child: Text(
-                        '75%',
-                        style: TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: Text(
-                        'Battery Life',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                    ),
-                  ],
+                  ),
+                  Text(
+                    'Battery Life',
+                    style: TextStyle(fontSize: 20),
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            // adjust to lowered middle
+            Container(
+              height: 200,
+              width: 200,
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text(
+                  'Manual SOS',
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              const SizedBox(height: 40,),
-              Container(
-                height: 200,
-                width: 200,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      offset: Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Center(
-                      child: Text(
-                        'Manual SOS',
-                        style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 40),
+          ],
         ),
       ),
-      //TODO: Update navigation bar when page becomes dynamic
       bottomNavigationBar: NavigationBar(
         height: 60,
         backgroundColor: Colors.lightBlue,
+        selectedIndex: 1,// change the highlighted page 
         destinations: const [
           NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
           NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
