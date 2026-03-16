@@ -3,16 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:sentinel_app/login.dart';
 
 class SignupPage extends StatelessWidget {
+  const SignupPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Color(0xFF3031C0),
-      body: SingleChildScrollView(
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 45),
+      body: Container(
+        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 40),
           height: MediaQuery.of(context).size.height - 50,
           width: double.infinity,
+        child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[

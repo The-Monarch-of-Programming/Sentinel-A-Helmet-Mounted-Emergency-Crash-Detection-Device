@@ -17,77 +17,93 @@ class UserDashboard extends StatelessWidget {
           IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const SizedBox(height: 40),
-            Container(
-              //adjusted size 
-              height: 250,
-              width: 250,
-              decoration: const BoxDecoration(
-                color: Colors.lightBlue,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '75%',
-                    style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'Battery Life',
-                    style: TextStyle(fontSize: 20),
-                  ),
-                ],
-              ),
-            ),
-            const Spacer(),
-            // adjust to lowered middle
-            Container(
-              height: 200,
-              width: 200,
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Text(
-                  'Manual SOS',
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              // This forces the content to be at least as tall as the screen
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Center(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 40),
+                      Container(
+                        height: 250,
+                        width: 250,
+                        decoration: const BoxDecoration(
+                          color: Colors.lightBlue,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 10,
+                              offset: Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '75%',
+                              style: TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Battery Life',
+                              style: TextStyle(fontSize: 20),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 20,),
+
+                      // The Spacer now knows exactly how much "empty"
+                      // space is left on the screen to fill.
+                      const Spacer(),
+
+                      Container(
+                        height: 250,
+                        width: 250,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 10,
+                              offset: Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'Manual SOS',
+                            style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                    ],
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 40),
-          ],
-        ),
+          );
+        },
       ),
+
       bottomNavigationBar: NavigationBar(
         height: 60,
         backgroundColor: Colors.lightBlue,
-        selectedIndex: 1,// change the highlighted page 
+        selectedIndex: 1, // change the highlighted page
         destinations: const [
           NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
           NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
