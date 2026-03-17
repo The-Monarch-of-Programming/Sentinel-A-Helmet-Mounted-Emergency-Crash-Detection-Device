@@ -63,16 +63,6 @@ class EditProfileScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        height: 60,
-        backgroundColor: Colors.lightBlue,
-        selectedIndex: 2, // Profile highlighted
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-          NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
     );
   }
 
