@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'home.dart';
 import 'login.dart';
 import 'editprofile.dart';
+import 'home.dart';
+import 'settings.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -138,18 +139,16 @@ class _UserProfileState extends State<UserProfile> {
                   ),
                 ),
                 onPressed: () async {
-                  // 1. Sign out from Firebase
                   await FirebaseAuth.instance.signOut();
 
-                  // 2. Navigate to Login and CLEAR the navigation stack
                   if (mounted) {
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const LoginPage(),
-                      ), // Make sure LoginPage is imported
+                      ),
                       (route) =>
-                          false, // This condition removes ALL previous routes
+                          false,
                     );
                   }
                 },
@@ -171,12 +170,16 @@ class _UserProfileState extends State<UserProfile> {
         backgroundColor: Colors.lightBlue,
         selectedIndex: 2,
         onDestinationSelected: (index) {
-          if (index == 1) {
+          if (index == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsPage()),
+            );
+          } else if (index == 1) {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const UserDashboard()),
             );
-          } else if (index == 0) {
           } else if (index == 2) {}
         },
         destinations: const [

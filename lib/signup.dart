@@ -73,7 +73,7 @@ class _SignupPageState extends State<SignupPage> {
         );
       }
     } on FirebaseAuthException catch (e) {
-      String message = "An error occurred";
+      String message = "The email address is not valid.";
 
       if (e.code == 'email-already-in-use') {
         message = "This email is already registered. Try logging in!";
@@ -85,7 +85,7 @@ class _SignupPageState extends State<SignupPage> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.message ?? "An error occurred")));
+      ).showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -312,28 +312,11 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  //widget add popup
-  Widget _buildAddField(String label, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextField(
-        style: const TextStyle(color: Colors.black),
-        decoration: InputDecoration(
-          labelText: label,
-          suffixIcon: Icon(icon, color: Colors.lightBlue),
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      ),
-    );
-  }
-
   Widget _buildDropdown(String label, Function(String?) onChanged) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: DropdownButtonFormField<String>(
-        value: _selectedBloodType,
+        initialValue: _selectedBloodType,
         style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
           labelText: label,

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
+  @override
   State<EditProfileScreen> createState() => _EditProfileState();
 }
 
@@ -167,7 +168,7 @@ class _EditProfileState extends State<EditProfileScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: DropdownButtonFormField<String>(
-        value: _selectedBloodType,
+        initialValue: _selectedBloodType,
         style: const TextStyle(color: Colors.black),
         // dropdownColor: Colors.white,
         decoration: InputDecoration(
@@ -187,22 +188,6 @@ class _EditProfileState extends State<EditProfileScreen> {
           DropdownMenuItem(value: "Unknown", child: Text("Unknown")),
         ],
         onChanged: onChanged,
-      ),
-    );
-  }
-
-  Widget _buildAddField(String label, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextField(
-        style: const TextStyle(color: Colors.black),
-        decoration: InputDecoration(
-          labelText: label,
-          suffixIcon: Icon(icon, color: Colors.lightBlue),
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        ),
       ),
     );
   }

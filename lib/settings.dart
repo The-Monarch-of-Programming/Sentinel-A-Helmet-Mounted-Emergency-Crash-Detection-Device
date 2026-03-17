@@ -1,103 +1,257 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'home.dart';
+import 'profile.dart';
+import 'login.dart';
+import 'editprofile.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// A lightweight service that persists user preferences.
-///
-/// The app uses this to drive global settings like dark mode.
-class SettingsService {
-  SettingsService._();
-  static final SettingsService instance = SettingsService._();
-
-  static const _darkModeKey = 'dark_mode';
-  static const _notificationsKey = 'notifications_enabled';
-
-  final ValueNotifier<bool> isDarkMode = ValueNotifier<bool>(false);
-  final ValueNotifier<bool> notificationsEnabled = ValueNotifier<bool>(true);
-
-  Future<void> init() async {
-    final prefs = await SharedPreferences.getInstance();
-    isDarkMode.value = prefs.getBool(_darkModeKey) ?? false;
-    notificationsEnabled.value = prefs.getBool(_notificationsKey) ?? true;
-  }
-
-  Future<void> setDarkMode(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_darkModeKey, value);
-    isDarkMode.value = value;
-  }
-
-  Future<void> setNotificationsEnabled(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_notificationsKey, value);
-    notificationsEnabled.value = value;
-  }
-}
-
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
   @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  String name = "Loading...";
+  String email = "Loading...";
+  bool _isDarkMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+    _loadDarkMode();
+  }
+
+  Future<void> _loadDarkMode() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        DocumentSnapshot userData = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get(const GetOptions(source: Source.server));
+
+        if (userData.exists) {
+          Map<String, dynamic> data = userData.data() as Map<String, dynamic>;
+          setState(() {
+            _isDarkMode = data['isDarkMode'] ?? false;
+          });
+        }
+      } catch (e) {
+        print("Error loading dark mode: $e");
+      }
+    }
+  }
+
+  Future<void> _setDarkMode(bool value) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'isDarkMode': value});
+        setState(() {
+          _isDarkMode = value;
+        });
+      } catch (e) {
+        print("Error saving dark mode: $e");
+      }
+    }
+  }
+
+  Future<void> _fetchUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        DocumentSnapshot userData = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get(const GetOptions(source: Source.server));
+
+        if (userData.exists) {
+          Map<String, dynamic> data = userData.data() as Map<String, dynamic>;
+
+          setState(() {
+            name = data['name'] ?? 'N/A';
+            email = data['email'] ?? 'N/A';
+          });
+        }
+      } catch (e) {
+        print("Error fetching data: $e");
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final backgroundColor = _isDarkMode ? Colors.grey[900] : const Color(0xFF3130C0);
+    final appBarColor = _isDarkMode ? Colors.grey[850] : const Color(0xFF3130C0);
+    final scaffoldColor = _isDarkMode ? Colors.grey[800] : Colors.lightBlue;
+
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: appBarColor,
         title: const Text('Settings'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
         centerTitle: true,
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: const EdgeInsets.all(20),
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'Preferences',
+            Row(
+              children: [
+                const CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.white,
+                  child: Icon(Icons.person, size: 40, color: Colors.grey),
+                ),
+                const SizedBox(width: 15),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      email,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+
+            const Text(
+              "Notification Settings",
+              style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            const SizedBox(height: 10),
+            ListTile(
+              leading: const Icon(Icons.edit, color: Colors.white),
+              title: const Text("Edit profile", style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.lock, color: Colors.white),
+              title: const Text("Change password", style: TextStyle(color: Colors.white)),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: const Icon(Icons.language, color: Colors.white),
+              title: const Text("Languages", style: TextStyle(color: Colors.white)),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: const Icon(Icons.contacts, color: Colors.white),
+              title: const Text("Add emergency contact", style: TextStyle(color: Colors.white)),
+              onTap: () {},
+            ),
+            SwitchListTile(
+              title: const Text("Share location", style: TextStyle(color: Colors.white)),
+              value: true,
+              onChanged: (value) {},
+            ),
+            SwitchListTile(
+              title: const Text("Dark mode", style: TextStyle(color: Colors.white)),
+              value: _isDarkMode,
+              onChanged: (value) {
+                _setDarkMode(value);
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text(
+              "More",
+              style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            const SizedBox(height: 10),
+            ListTile(
+              leading: const Icon(Icons.info_outline, color: Colors.white),
+              title: const Text("About us", style: TextStyle(color: Colors.white)),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: const Icon(Icons.privacy_tip, color: Colors.white),
+              title: const Text("Privacy policy", style: TextStyle(color: Colors.white)),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: const Icon(Icons.article, color: Colors.white),
+              title: const Text("Terms and conditions", style: TextStyle(color: Colors.white)),
+              onTap: () {},
+            ),
+
+            const SizedBox(height: 30),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginPage(),
+                    ),
+                    (route) => false, 
+                  );
+                }
+              },
+              child: const Text(
+                "Log Out",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            ValueListenableBuilder<bool>(
-              valueListenable: SettingsService.instance.isDarkMode,
-              builder: (context, isDarkMode, _) {
-                return SwitchListTile(
-                  title: const Text('Dark mode'),
-                  subtitle: const Text('Use a darker theme for the app'),
-                  value: isDarkMode,
-                  onChanged: (value) {
-                    SettingsService.instance.setDarkMode(value);
-                  },
-                );
-              },
-            ),
-            ValueListenableBuilder<bool>(
-              valueListenable: SettingsService.instance.notificationsEnabled,
-              builder: (context, enabled, _) {
-                return SwitchListTile(
-                  title: const Text('Notifications'),
-                  subtitle:
-                      const Text('Enable crash alerts and status updates'),
-                  value: enabled,
-                  onChanged: (value) {
-                    SettingsService.instance.setNotificationsEnabled(value);
-                  },
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: const Text('About'),
-              subtitle: const Text('App version and credits'),
-              onTap: () {
-                showAboutDialog(
-                  context: context,
-                  applicationName: 'Sentinel',
-                  applicationVersion: '1.0.0',
-                  applicationLegalese: '© 2026 Sentinel',
-                );
-              },
-            ),
           ],
         ),
+      ),
+      bottomNavigationBar: NavigationBar(
+        height: 60,
+        backgroundColor: scaffoldColor,
+        selectedIndex: 0,
+        onDestinationSelected: (index) {
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const UserDashboard()),
+            );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const UserProfile()),
+            );
+          }
+        },
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+          NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+        ],
       ),
     );
   }

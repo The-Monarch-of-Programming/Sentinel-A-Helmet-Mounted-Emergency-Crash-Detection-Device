@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'profile.dart';
+import 'settings.dart';
 
 class UserDashboard extends StatelessWidget {
   const UserDashboard({super.key});
@@ -105,12 +106,17 @@ class UserDashboard extends StatelessWidget {
         backgroundColor: Colors.lightBlue,
         selectedIndex: 1,
         onDestinationSelected: (index) {
-          if (index == 2) {
+          if (index == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsPage()),
+            );
+          } else if (index == 2) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const UserProfile()),
             );
-          } else if (index == 0) {}
+          }
         },
         destinations: const [
           NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
