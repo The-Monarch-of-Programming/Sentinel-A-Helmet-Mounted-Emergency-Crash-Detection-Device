@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
 import 'editprofile.dart';
+import 'settings.dart';
 
 class UserProfile extends StatelessWidget {
   const UserProfile({super.key});
@@ -66,19 +67,21 @@ class UserProfile extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
+       bottomNavigationBar: NavigationBar(
         height: 60,
         backgroundColor: Colors.lightBlue,
         selectedIndex: 2,
         onDestinationSelected: (index) {
-          if (index == 1) {
+          if (index == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsPage()),
+            );
+          } else if (index == 1) {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const UserDashboard()),
             );
-          } else if (index == 0) {
-
-             } else if (index == 2) {
           }
         },
         destinations: const [
