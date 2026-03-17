@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:sentinel_app/login.dart';
 import 'package:sentinel_app/signup.dart';
+import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(MyApp());
 }
 
@@ -24,6 +31,9 @@ class MyApp extends StatelessWidget {
         textTheme: const TextTheme(
           bodyMedium: TextStyle(color: Colors.white),
           titleLarge: TextStyle(color: Colors.white),
+        ),
+        iconTheme: const IconThemeData(
+          color: Colors.lightBlue,
         ),
       ),
     );

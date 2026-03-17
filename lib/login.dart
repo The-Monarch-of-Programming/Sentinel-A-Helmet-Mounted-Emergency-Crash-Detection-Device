@@ -1,29 +1,95 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:sentinel_app/home.dart';
 import 'package:sentinel_app/signup.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sentinel_app/dispatch.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  bool _isLoading = false;
+
+  Future<void> _login() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in all fields")),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+    // 1. CHANGE: Capture the UserCredential so we can get the UID
+    UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+
+    // 2. CHANGE: Fetch the user's document from Firestore using the UID
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userCredential.user!.uid)
+        .get();
+
+    if (mounted) {
+      if (userDoc.exists) {
+        // 3. CHANGE: Read the 'role' field
+        String role = userDoc.get('role') ?? 'passenger'; 
+
+        // 4. CHANGE: Conditional Navigation based on role
+        if (role == 'driver') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const UserDashboard()), // Your default page
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const DispatcherApp()), // Different page
+          );
+        }
+      } else {
+        // Safety check if document doesn't exist
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("User profile data not found.")),
+        );
+      }
+    }
+  } on FirebaseAuthException catch (e) {
+      // Handle login errors specifically
+      String errorMessage = "Login failed";
+      if (e.code == 'user-not-found') {
+        errorMessage = "No user found for that email.";
+      } else if (e.code == 'wrong-password') {
+        errorMessage = "Wrong password provided.";
+      } else if (e.code == 'invalid-email') {
+        errorMessage = "The email address is badly formatted.";
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? errorMessage)),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+  
+  //PAGE BODY
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Color(0xFF3031C0),
-      // appBar: AppBar(
-      //   elevation: 0,
-      //   backgroundColor: Colors.grey,
-      //   leading: IconButton(
-      //     onPressed: () {
-      //       Navigator.pop(context);
-      //     },
-      //     icon: Icon(Icons.arrow_back_ios,
-      //       size: 20,
-      //       color: Colors.black,),
-
-      //   ), systemOverlayStyle: SystemUiOverlayStyle.dark,
-      // ),
       body: SizedBox(
         height: MediaQuery.of(context).size.height,
         width: double.infinity,
@@ -54,8 +120,8 @@ class LoginPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 40),
                     child: Column(
                       children: <Widget>[
-                        inputFile(label: "Email"),
-                        inputFile(label: "Password", obscureText: true),
+                        inputFile(label: "Email", controller: _emailController),
+                        inputFile(label: "Password", obscureText: true, controller: _passwordController),
                       ],
                     ),
                   ),
@@ -75,12 +141,7 @@ class LoginPage extends StatelessWidget {
                       child: MaterialButton(
                         minWidth: double.infinity,
                         height: 60,
-                        onPressed: () {
-                          Navigator.pushReplacement(context,  MaterialPageRoute(
-                              builder: (context) => UserDashboard(),
-                            ),
-                            );
-                        },
+                        onPressed: _login,
                         color: Color(0xff0095FF),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -129,7 +190,7 @@ class LoginPage extends StatelessWidget {
 }
 
 // we will be creating a widget for text field
-Widget inputFile({label, obscureText = false}) {
+Widget inputFile({label, obscureText = false, required TextEditingController controller}) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
@@ -137,6 +198,7 @@ Widget inputFile({label, obscureText = false}) {
       SizedBox(height: 5),
       TextField(
         obscureText: obscureText,
+        controller: controller,
         decoration: InputDecoration(
           contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
           enabledBorder: OutlineInputBorder(
