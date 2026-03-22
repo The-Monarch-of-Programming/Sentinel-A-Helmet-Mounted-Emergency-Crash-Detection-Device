@@ -22,45 +22,6 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     super.initState();
     _fetchUserData();
-    _loadDarkMode();
-  }
-
-  Future<void> _loadDarkMode() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        DocumentSnapshot userData = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get(const GetOptions(source: Source.server));
-
-        if (userData.exists) {
-          Map<String, dynamic> data = userData.data() as Map<String, dynamic>;
-          setState(() {
-            _isDarkMode = data['isDarkMode'] ?? false;
-          });
-        }
-      } catch (e) {
-        print("Error loading dark mode: $e");
-      }
-    }
-  }
-
-  Future<void> _setDarkMode(bool value) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({'isDarkMode': value});
-        setState(() {
-          _isDarkMode = value;
-        });
-      } catch (e) {
-        print("Error saving dark mode: $e");
-      }
-    }
   }
 
   Future<void> _fetchUserData() async {
@@ -88,8 +49,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = _isDarkMode ? Colors.grey[900] : const Color(0xFF3130C0);
-    final appBarColor = _isDarkMode ? Colors.grey[850] : const Color(0xFF3130C0);
+    final backgroundColor =
+        _isDarkMode ? Colors.grey[900] : const Color(0xFF3130C0);
+    final appBarColor =
+        _isDarkMode ? Colors.grey[850] : const Color(0xFF3130C0);
     final scaffoldColor = _isDarkMode ? Colors.grey[800] : Colors.lightBlue;
 
     return Scaffold(
@@ -132,75 +95,76 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
             const SizedBox(height: 30),
-
             const Text(
               "Notification Settings",
               style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
             ),
             const SizedBox(height: 10),
             ListTile(
               leading: const Icon(Icons.edit, color: Colors.white),
-              title: const Text("Edit profile", style: TextStyle(color: Colors.white)),
+              title: const Text("Edit profile",
+                  style: TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const EditProfileScreen()),
                 );
               },
             ),
             ListTile(
               leading: const Icon(Icons.lock, color: Colors.white),
-              title: const Text("Change password", style: TextStyle(color: Colors.white)),
+              title: const Text("Change password",
+                  style: TextStyle(color: Colors.white)),
               onTap: () {},
             ),
             ListTile(
               leading: const Icon(Icons.language, color: Colors.white),
-              title: const Text("Languages", style: TextStyle(color: Colors.white)),
+              title: const Text("Languages",
+                  style: TextStyle(color: Colors.white)),
               onTap: () {},
             ),
             ListTile(
               leading: const Icon(Icons.contacts, color: Colors.white),
-              title: const Text("Add emergency contact", style: TextStyle(color: Colors.white)),
+              title: const Text("Add emergency contact",
+                  style: TextStyle(color: Colors.white)),
               onTap: () {},
             ),
             SwitchListTile(
-              title: const Text("Share location", style: TextStyle(color: Colors.white)),
+              title: const Text("Share location",
+                  style: TextStyle(color: Colors.white)),
               value: true,
               onChanged: (value) {},
             ),
-            SwitchListTile(
-              title: const Text("Dark mode", style: TextStyle(color: Colors.white)),
-              value: _isDarkMode,
-              onChanged: (value) {
-                _setDarkMode(value);
-              },
-            ),
-
-            const SizedBox(height: 20),
-
             const Text(
               "More",
               style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
             ),
             const SizedBox(height: 10),
             ListTile(
               leading: const Icon(Icons.info_outline, color: Colors.white),
-              title: const Text("About us", style: TextStyle(color: Colors.white)),
+              title:
+                  const Text("About us", style: TextStyle(color: Colors.white)),
               onTap: () {},
             ),
             ListTile(
               leading: const Icon(Icons.privacy_tip, color: Colors.white),
-              title: const Text("Privacy policy", style: TextStyle(color: Colors.white)),
+              title: const Text("Privacy policy",
+                  style: TextStyle(color: Colors.white)),
               onTap: () {},
             ),
             ListTile(
               leading: const Icon(Icons.article, color: Colors.white),
-              title: const Text("Terms and conditions", style: TextStyle(color: Colors.white)),
+              title: const Text("Terms and conditions",
+                  style: TextStyle(color: Colors.white)),
               onTap: () {},
             ),
-
             const SizedBox(height: 30),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -218,7 +182,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     MaterialPageRoute(
                       builder: (context) => const LoginPage(),
                     ),
-                    (route) => false, 
+                    (route) => false,
                   );
                 }
               },
