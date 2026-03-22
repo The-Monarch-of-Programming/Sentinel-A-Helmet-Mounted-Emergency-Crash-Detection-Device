@@ -22,7 +22,7 @@ class _DispatcherAppState extends State<DispatcherApp> {
   }
 }
 
-// --- PAGE 1: DASHBOARD ---
+//Dashboard Page
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -100,13 +100,13 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ),
-      // --- ADDED REUSABLE NAV BAR ---
+      // Reusable Navigation Bar
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
     );
   }
 }
 
-// --- PAGE 2: ALL TASKS PAGE ---
+//All task Page
 class AllTasksPage extends StatefulWidget {
   const AllTasksPage({super.key});
 
@@ -159,7 +159,7 @@ class _AllTasksPageState extends State<AllTasksPage> {
           ],
         ),
       ),
-      // --- ADDED REUSABLE NAV BAR ---
+      //Reusable Bottom Navigation Bar
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
     );
   }
@@ -197,7 +197,7 @@ class _AllTasksPageState extends State<AllTasksPage> {
   }
 }
 
-// --- PAGE 3: EMERGENCY ALERTS ---
+//Emergency Alerts
 class EmergencyAlerts extends StatefulWidget {
   const EmergencyAlerts({super.key});
 
@@ -207,21 +207,21 @@ class EmergencyAlerts extends StatefulWidget {
 
 class _EmergencyAlertsState extends State<EmergencyAlerts> {
   final List<Map<String, String>> tasks = const [
-    {"location": "Sta. Mesa", "time": "3:28:59 pm"},
-    {"location": "San Jose Del Monte", "time": "5:08:45 pm"},
+    {"name": "Sta. Mesa", "contact": "0961 212 1223"},
+    {"name": "San Jose Del Monte", "contact": "0947 234 2323"},
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Emergency Alerts"), backgroundColor: const Color(0xFF862134)),
+      appBar: AppBar(title: const Text("Emergency Alerts"), backgroundColor: const Color(0xFF3B4CCF)),
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF862134), Color(0xFF4A101B)],
+            colors: [Color(0xFF3B4CCF), Color(0xFF1A1A72)],
           ),
         ),
         child: Column(
@@ -234,7 +234,7 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
               padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.redAccent.withOpacity(0.2),
+                  color: const Color(0xFF5A75F9).withOpacity(0.8),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
@@ -243,8 +243,8 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
                       padding: EdgeInsets.all(15),
                       child: Row(
                         children: [
-                          Expanded(flex: 3, child: Text('Location', style: TextStyle(fontWeight: FontWeight.bold))),
-                          Expanded(flex: 3, child: Text('Time', style: TextStyle(fontWeight: FontWeight.bold))),
+                          Expanded(flex: 3, child: Text('Name', style: TextStyle(fontWeight: FontWeight.bold))),
+                          Expanded(flex: 3, child: Text('Contact', style: TextStyle(fontWeight: FontWeight.bold))),
                           Expanded(flex: 2, child: Text('Action', textAlign: TextAlign.center)),
                         ],
                       ),
@@ -253,12 +253,12 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
                       padding: const EdgeInsets.all(15),
                       child: Row(
                         children: [
-                          Expanded(flex: 3, child: Text(task['location']!)),
-                          Expanded(flex: 3, child: Text(task['time']!)),
+                          Expanded(flex: 3, child: Text(task['name']!)),
+                          Expanded(flex: 3, child: Text(task['contact']!)),
                           Expanded(
                             flex: 2,
                             child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                              style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 0, 0, 0)),
                               onPressed: () {},
                               child: const Text("View", style: TextStyle(fontSize: 10, color: Colors.white)),
                             ),
@@ -273,13 +273,13 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
           ],
         ),
       ),
-      // --- ADDED REUSABLE NAV BAR ---
+    
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
     );
   }
 }
 
-// --- NEW REUSABLE COMPONENT: CustomBottomNavBar ---
+//CustomBottomNavBar
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
   const CustomBottomNavBar({super.key, required this.currentIndex});
@@ -306,7 +306,7 @@ class CustomBottomNavBar extends StatelessWidget {
   }
 }
 
-// --- REUSABLE COMPONENTS ---
+//Reusable Components-
 
 class ActionTile extends StatelessWidget {
   final String title;
