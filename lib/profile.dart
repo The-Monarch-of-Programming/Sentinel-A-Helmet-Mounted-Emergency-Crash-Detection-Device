@@ -80,22 +80,19 @@ class _UserProfileState extends State<UserProfile> {
           child: Column(
             children: [
               const SizedBox(height: 30),
-              CircleAvatar(
+              const CircleAvatar(
                 radius: 60,
                 backgroundColor: Colors.white,
-                child: const Icon(Icons.person, size: 60, color: Colors.grey),
+                child: Icon(Icons.person, size: 60, color: Colors.grey),
               ),
               const SizedBox(height: 30),
-
               _buildTextField(label: "NAME", value: name),
               _buildTextField(label: "PHONE", value: phone),
               _buildTextField(label: "EMAIL", value: email),
               _buildTextField(label: "DATE OF BIRTH", value: dob),
               _buildTextField(label: "BLOOD TYPE", value: bloodType),
               _buildTextField(label: "ADDRESS", value: address),
-
               const SizedBox(height: 30),
-
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.lightBlueAccent,
@@ -147,8 +144,7 @@ class _UserProfileState extends State<UserProfile> {
                       MaterialPageRoute(
                         builder: (context) => const LoginPage(),
                       ),
-                      (route) =>
-                          false,
+                      (route) => false,
                     );
                   }
                 },
@@ -200,7 +196,7 @@ class _UserProfileState extends State<UserProfile> {
         enableInteractiveSelection: false,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.white),
+          labelStyle: const TextStyle(color: Colors.white),
           floatingLabelBehavior: FloatingLabelBehavior.always,
           filled: true,
           fillColor: Colors.lightBlue,

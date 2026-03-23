@@ -16,7 +16,11 @@ class UserDashboard extends StatelessWidget {
         title: const Text('Dashboard'),
         centerTitle: true,
         actions: <Widget>[
-          IconButton(onPressed: () {}, icon: const Icon(Icons.location_on), color: Colors.lightBlue,),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.location_on),
+            color: Colors.lightBlue,
+          ),
         ],
       ),
       body: LayoutBuilder(
@@ -61,7 +65,7 @@ class UserDashboard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // The Spacer now knows exactly how much "empty"
                       // space is left on the screen to fill.
@@ -81,13 +85,45 @@ class UserDashboard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: const Center(
-                          child: Text(
-                            'Manual SOS',
-                            style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                        child: InkWell(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  backgroundColor: Colors.black87,
+                                  title: const Text(
+                                    'SOS Alert',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  content: const Text(
+                                    'Emergency alert has been sent! Help is on the way.',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text(
+                                        'OK',
+                                        style:
+                                            TextStyle(color: Colors.lightBlue),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          child: const Center(
+                            child: Text(
+                              'Manual SOS',
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                                color: Color.fromARGB(255, 0, 0, 0),
+                              ),
                             ),
                           ),
                         ),

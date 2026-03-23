@@ -28,43 +28,48 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-    // 1. CHANGE: Capture the UserCredential so we can get the UID
-    UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-    );
+      // 1. CHANGE: Capture the UserCredential so we can get the UID
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-    // 2. CHANGE: Fetch the user's document from Firestore using the UID
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userCredential.user!.uid)
-        .get();
+      // 2. CHANGE: Fetch the user's document from Firestore using the UID
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
 
-    if (mounted) {
-      if (userDoc.exists) {
-        // 3. CHANGE: Read the 'role' field
-        String role = userDoc.get('role') ?? 'passenger'; 
+      if (mounted) {
+        if (userDoc.exists) {
+          // 3. CHANGE: Read the 'role' field
+          String role = userDoc.get('role') ?? 'passenger';
 
-        // 4. CHANGE: Conditional Navigation based on role
-        if (role == 'driver') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const UserDashboard()), // Your default page
-          );
+          // 4. CHANGE: Conditional Navigation based on role
+          if (role == 'driver') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      const UserDashboard()), // Your default page
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      const DispatcherApp()), // Different page
+            );
+          }
         } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const DispatcherApp()), // Different page
+          // Safety check if document doesn't exist
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("User profile data not found.")),
           );
         }
-      } else {
-        // Safety check if document doesn't exist
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("User profile data not found.")),
-        );
       }
-    }
-  } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e) {
       // Handle login errors specifically
       String errorMessage = "Login failed";
       if (e.code == 'user-not-found') {
@@ -74,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
       } else if (e.code == 'invalid-email') {
         errorMessage = "The email address is badly formatted.";
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message ?? errorMessage)),
       );
@@ -82,13 +87,13 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-  
+
   //PAGE BODY
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: Color(0xFF3031C0),
+      backgroundColor: const Color(0xFF3031C0),
       body: SizedBox(
         height: MediaQuery.of(context).size.height,
         width: double.infinity,
@@ -99,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
-                  Column(
+                  const Column(
                     children: <Widget>[
                       Text(
                         "Login",
@@ -111,26 +116,31 @@ class _LoginPageState extends State<LoginPage> {
                       SizedBox(height: 20),
                       Text(
                         "Login to your account",
-                        style: TextStyle(fontSize: 15,),
+                        style: TextStyle(
+                          fontSize: 15,
+                        ),
                       ),
                     ],
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: Column(
                       children: <Widget>[
                         inputFile(label: "Email", controller: _emailController),
-                        inputFile(label: "Password", obscureText: true, controller: _passwordController),
+                        inputFile(
+                            label: "Password",
+                            obscureText: true,
+                            controller: _passwordController),
                       ],
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: Container(
-                      padding: EdgeInsets.only(top: 3, left: 3),
+                      padding: const EdgeInsets.only(top: 3, left: 3),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(50),
-                        border: Border(
+                        border: const Border(
                           bottom: BorderSide(color: Colors.black),
                           top: BorderSide(color: Colors.black),
                           left: BorderSide(color: Colors.black),
@@ -141,12 +151,12 @@ class _LoginPageState extends State<LoginPage> {
                         minWidth: double.infinity,
                         height: 60,
                         onPressed: _login,
-                        color: Color(0xff0095FF),
+                        color: const Color(0xff0095FF),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(50),
                         ),
-                        child: Text(
+                        child: const Text(
                           "Login",
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
@@ -157,21 +167,20 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      Text("Don't have an account?"),
+                      const Text("Don't have an account?"),
                       TextButton(
                         onPressed: () {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => SignupPage(),
+                              builder: (context) => const SignupPage(),
                             ),
                           );
                         },
-                        child: Text(
+                        child: const Text(
                           'Sign Up',
                           style: TextStyle(color: Colors.lightBlue),
                         ),
@@ -189,16 +198,18 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 // we will be creating a widget for text field
-Widget inputFile({label, obscureText = false, required TextEditingController controller}) {
+Widget inputFile(
+    {label, obscureText = false, required TextEditingController controller}) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
-      Text(label, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
-      SizedBox(height: 5),
+      Text(label,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
+      const SizedBox(height: 5),
       TextField(
         obscureText: obscureText,
         controller: controller,
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
           contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(color: Colors.grey),
@@ -208,7 +219,7 @@ Widget inputFile({label, obscureText = false, required TextEditingController con
           ),
         ),
       ),
-      SizedBox(height: 10),
+      const SizedBox(height: 10),
     ],
   );
 }
