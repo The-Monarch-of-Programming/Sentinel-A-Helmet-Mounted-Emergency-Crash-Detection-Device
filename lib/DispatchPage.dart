@@ -176,7 +176,7 @@ class _AllTasksPageState extends State<AllTasksPage> {
       ),
     );
   }
-
+//
   Widget _buildTaskRow(Map<String, String> task) {
     return Padding(
       padding: const EdgeInsets.all(15),
