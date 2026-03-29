@@ -3,7 +3,7 @@ import 'package:sentinel_app/home.dart';
 import 'package:sentinel_app/signup.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sentinel_app/dispatch.dart';
+import 'package:sentinel_app/DispatchPage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -28,43 +28,48 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-    // 1. CHANGE: Capture the UserCredential so we can get the UID
-    UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-    );
-
-    // 2. CHANGE: Fetch the user's document from Firestore using the UID
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userCredential.user!.uid)
-        .get();
-
-    if (mounted) {
-      if (userDoc.exists) {
-        // 3. CHANGE: Read the 'role' field
-        String role = userDoc.get('role') ?? 'passenger'; 
-
-        // 4. CHANGE: Conditional Navigation based on role
-        if (role == 'driver') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const UserDashboard()), // Your default page
+      // 1. CHANGE: Capture the UserCredential so we can get the UID
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
           );
+
+      // 2. CHANGE: Fetch the user's document from Firestore using the UID
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (mounted) {
+        if (userDoc.exists) {
+          // 3. CHANGE: Read the 'role' field
+          String role = userDoc.get('role') ?? 'passenger';
+
+          // 4. CHANGE: Conditional Navigation based on role
+          if (role == 'driver') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const UserDashboard(),
+              ), // Your default page
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DispatcherApp(),
+              ), // Different page
+            );
+          }
         } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const DispatcherApp()), // Different page
+          // Safety check if document doesn't exist
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("User profile data not found.")),
           );
         }
-      } else {
-        // Safety check if document doesn't exist
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("User profile data not found.")),
-        );
       }
-    }
-  } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e) {
       // Handle login errors specifically
       String errorMessage = "Login failed";
       if (e.code == 'user-not-found') {
@@ -74,15 +79,15 @@ class _LoginPageState extends State<LoginPage> {
       } else if (e.code == 'invalid-email') {
         errorMessage = "The email address is badly formatted.";
       }
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? errorMessage)),
-      );
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message ?? errorMessage)));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-  
+
   //PAGE BODY
   @override
   Widget build(BuildContext context) {
@@ -111,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                       SizedBox(height: 20),
                       Text(
                         "Login to your account",
-                        style: TextStyle(fontSize: 15,),
+                        style: TextStyle(fontSize: 15),
                       ),
                     ],
                   ),
@@ -120,7 +125,11 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       children: <Widget>[
                         inputFile(label: "Email", controller: _emailController),
-                        inputFile(label: "Password", obscureText: true, controller: _passwordController),
+                        inputFile(
+                          label: "Password",
+                          obscureText: true,
+                          controller: _passwordController,
+                        ),
                       ],
                     ),
                   ),
@@ -189,7 +198,11 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 // we will be creating a widget for text field
-Widget inputFile({label, obscureText = false, required TextEditingController controller}) {
+Widget inputFile({
+  label,
+  obscureText = false,
+  required TextEditingController controller,
+}) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[

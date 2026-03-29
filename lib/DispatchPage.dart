@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() {
   runApp(const DispatcherApp());
@@ -42,10 +44,17 @@ class _DashboardPageState extends State<DashboardPage> {
           padding: EdgeInsets.all(8.0),
           child: CircleAvatar(
             backgroundColor: Color(0xFF5A62F1),
-            child: Icon(Icons.directions_run, size: 20, color: Colors.cyanAccent),
+            child: Icon(
+              Icons.directions_run,
+              size: 20,
+              color: Colors.cyanAccent,
+            ),
           ),
         ),
-        title: const Text('Dashboard', style: TextStyle(fontWeight: FontWeight.w300)),
+        title: const Text(
+          'Dashboard',
+          style: TextStyle(fontWeight: FontWeight.w300),
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -61,7 +70,10 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               child: Column(
                 children: [
-                  const Text("Dispatcher", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400)),
+                  const Text(
+                    "Dispatcher",
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400),
+                  ),
                   const Divider(color: Colors.white24, height: 30),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -84,7 +96,10 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.list_alt_rounded,
               color: const Color(0xFF192BB6),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const AllTasksPage()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AllTasksPage()),
+                );
               },
             ),
             const SizedBox(height: 10),
@@ -94,7 +109,12 @@ class _DashboardPageState extends State<DashboardPage> {
               icon: Icons.notifications_active,
               color: const Color(0xFF862134),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const EmergencyAlerts()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const EmergencyAlerts(),
+                  ),
+                );
               },
             ),
           ],
@@ -125,7 +145,10 @@ class _AllTasksPageState extends State<AllTasksPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("All Tasks"), backgroundColor: const Color(0xFF3B4CCF)),
+      appBar: AppBar(
+        title: const Text("All Tasks"),
+        backgroundColor: const Color(0xFF3B4CCF),
+      ),
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
@@ -139,7 +162,10 @@ class _AllTasksPageState extends State<AllTasksPage> {
           children: [
             const Padding(
               padding: EdgeInsets.all(20.0),
-              child: Text('Task List', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Task List',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -169,8 +195,17 @@ class _AllTasksPageState extends State<AllTasksPage> {
       padding: EdgeInsets.all(15),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text('Location', style: TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(flex: 3, child: Text('Time', style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(
+            flex: 3,
+            child: Text(
+              'Location',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text('Time', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
           Expanded(flex: 2, child: Text('Action', textAlign: TextAlign.center)),
         ],
       ),
@@ -214,7 +249,10 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Emergency Alerts"), backgroundColor: const Color(0xFF3B4CCF)),
+      appBar: AppBar(
+        title: const Text("Emergency Alerts"),
+        backgroundColor: const Color(0xFF3B4CCF),
+      ),
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
@@ -228,7 +266,10 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
           children: [
             const Padding(
               padding: EdgeInsets.all(20.0),
-              child: Text('Emergency List', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Emergency List',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -243,29 +284,64 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
                       padding: EdgeInsets.all(15),
                       child: Row(
                         children: [
-                          Expanded(flex: 3, child: Text('Name', style: TextStyle(fontWeight: FontWeight.bold))),
-                          Expanded(flex: 3, child: Text('Contact', style: TextStyle(fontWeight: FontWeight.bold))),
-                          Expanded(flex: 2, child: Text('Action', textAlign: TextAlign.center)),
-                        ],
-                      ),
-                    ),
-                    ...tasks.map((task) => Padding(
-                      padding: const EdgeInsets.all(15),
-                      child: Row(
-                        children: [
-                          Expanded(flex: 3, child: Text(task['name']!)),
-                          Expanded(flex: 3, child: Text(task['contact']!)),
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              'Name',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              'Contact',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
                           Expanded(
                             flex: 2,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 0, 0, 0)),
-                              onPressed: () {},
-                              child: const Text("View", style: TextStyle(fontSize: 10, color: Colors.white)),
-                            ),
+                            child: Text('Action', textAlign: TextAlign.center),
                           ),
                         ],
                       ),
-                    )).toList(),
+                    ),
+                    ...tasks
+                        .map(
+                          (task) => Padding(
+                            padding: const EdgeInsets.all(15),
+                            child: Row(
+                              children: [
+                                Expanded(flex: 3, child: Text(task['name']!)),
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(task['contact']!),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color.fromARGB(
+                                        255,
+                                        0,
+                                        0,
+                                        0,
+                                      ),
+                                    ),
+                                    onPressed: () {},
+                                    child: const Text(
+                                      "View",
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                        .toList(),
                   ],
                 ),
               ),
@@ -273,7 +349,7 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
           ],
         ),
       ),
-    
+
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
     );
   }
@@ -299,8 +375,14 @@ class CustomBottomNavBar extends StatelessWidget {
       },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Dashboard'),
-        BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Profile'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home_filled),
+          label: 'Dashboard',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.account_circle),
+          label: 'Profile',
+        ),
       ],
     );
   }
@@ -333,7 +415,10 @@ class ActionTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: Container(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Row(
             children: [
               Icon(icon, size: 40, color: Colors.white),
@@ -341,8 +426,17 @@ class ActionTile extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(fontSize: 12, color: Colors.white60),
+                  ),
                 ],
               ),
             ],
@@ -352,6 +446,7 @@ class ActionTile extends StatelessWidget {
     );
   }
 }
+
 //
 class StatBox extends StatelessWidget {
   final String label;
@@ -363,11 +458,17 @@ class StatBox extends StatelessWidget {
     return Container(
       width: 120,
       padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(15)),
+      decoration: BoxDecoration(
+        color: Colors.white10,
+        borderRadius: BorderRadius.circular(15),
+      ),
       child: Column(
         children: [
           Text(label, style: const TextStyle(fontSize: 10)),
-          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
