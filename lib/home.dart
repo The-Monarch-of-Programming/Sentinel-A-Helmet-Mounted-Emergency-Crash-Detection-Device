@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'profile.dart';
-import 'settings.dart';
+import 'widgets/bottomnavbar.dart';
 
 class UserDashboard extends StatelessWidget {
   const UserDashboard({super.key});
@@ -101,29 +100,7 @@ class UserDashboard extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar: NavigationBar(
-        height: 60,
-        backgroundColor: Colors.lightBlue,
-        selectedIndex: 1,
-        onDestinationSelected: (index) {
-          if (index == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsPage()),
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const UserProfile()),
-            );
-          }
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-          NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
+      bottomNavigationBar: CustomBottomNavBar(currentIndex: 1, role: 'driver')
     );
   }
 }

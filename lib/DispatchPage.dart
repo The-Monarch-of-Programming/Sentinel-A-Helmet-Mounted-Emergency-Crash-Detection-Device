@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-void main() {
-  runApp(const DispatcherApp());
-}
+import 'widgets/bottomnavbar.dart';
 
 class DispatcherApp extends StatefulWidget {
   const DispatcherApp({super.key});
@@ -121,7 +118,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
       // Reusable Navigation Bar
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
+      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1, role: 'dispatcher'),
     );
   }
 }
@@ -186,7 +183,7 @@ class _AllTasksPageState extends State<AllTasksPage> {
         ),
       ),
       //Reusable Bottom Navigation Bar
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
+      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1, role: 'dispatcher'),
     );
   }
 
@@ -350,40 +347,7 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
         ),
       ),
 
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
-    );
-  }
-}
-
-//CustomBottomNavBar
-class CustomBottomNavBar extends StatelessWidget {
-  final int currentIndex;
-  const CustomBottomNavBar({super.key, required this.currentIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      backgroundColor: const Color.fromARGB(255, 0, 204, 255),
-      selectedItemColor: Colors.black87,
-      unselectedItemColor: Colors.black45,
-      currentIndex: currentIndex,
-      onTap: (index) {
-        // Basic Logic: If Home is pressed and we aren't there, go back
-        if (index == 1) {
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_filled),
-          label: 'Dashboard',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.account_circle),
-          label: 'Profile',
-        ),
-      ],
+      bottomNavigationBar: CustomBottomNavBar(currentIndex: 1, role: 'dispatcher'),
     );
   }
 }
