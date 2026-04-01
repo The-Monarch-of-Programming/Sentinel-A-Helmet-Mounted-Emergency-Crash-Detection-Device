@@ -3,7 +3,7 @@ import 'package:sentinel_app/home.dart';
 import 'package:sentinel_app/signup.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sentinel_app/dispatch.dart';
+import 'package:sentinel_app/DispatchPage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

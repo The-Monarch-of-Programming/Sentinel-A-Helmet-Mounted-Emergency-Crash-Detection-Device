@@ -1,0 +1,56 @@
+import 'package:flutter/material.dart';
+import '../home.dart';
+import '../profile.dart';
+import '../settings.dart';
+import '../DispatchPage.dart';
+
+class CustomBottomNavBar extends StatelessWidget {
+  final int currentIndex;
+  final String role;
+
+  const CustomBottomNavBar({
+    super.key,
+    required this.currentIndex,
+    required this.role,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      height: 60,
+      backgroundColor: Colors.lightBlue,
+      selectedIndex: currentIndex,
+      onDestinationSelected: (index) {
+        if (index == currentIndex) return;
+
+        Widget nextScreen;
+
+        switch (index) {
+          case 0:
+            nextScreen = const SettingsPage();
+            break;
+          case 1:
+            nextScreen = (role == 'dispatcher')
+                ? const DashboardPage()
+                : const UserDashboard();
+            break;
+          case 2:
+            nextScreen = const UserProfile();
+            break;
+          default:
+            return;
+        }
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => nextScreen),
+        );
+      },
+      destinations: const [
+        NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+        NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
+        NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+      ],
+    );
+  }
+}

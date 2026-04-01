@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'home.dart';
-import 'profile.dart';
 import 'login.dart';
 import 'editprofile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'widgets/bottomnavbar.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -16,6 +15,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   String name = "Loading...";
   String email = "Loading...";
+  String role = "";
   bool _isDarkMode = false;
 
   @override
@@ -39,6 +39,7 @@ class _SettingsPageState extends State<SettingsPage> {
           setState(() {
             name = data['name'] ?? 'N/A';
             email = data['email'] ?? 'N/A';
+            role = data['role'] ?? "Not Set";
           });
         }
       } catch (e) {
@@ -47,12 +48,113 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  Future<void> _addEmergencyContact() async {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController phoneController = TextEditingController();
+    final TextEditingController relationController = TextEditingController();
+
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Emergency Contact"),
+        backgroundColor: const Color(0xFF3130C0),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDialogTextField(nameController, "Full Name", Icons.person),
+              const SizedBox(height: 15),
+              _buildDialogTextField(
+                phoneController,
+                "Phone Number",
+                Icons.phone,
+                inputType: TextInputType.phone,
+              ),
+              const SizedBox(height: 15),
+              _buildDialogTextField(
+                relationController,
+                "Relationship",
+                Icons.family_restroom,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isNotEmpty &&
+                  phoneController.text.isNotEmpty) {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user != null) {
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .update({
+                        'emergencyContacts': FieldValue.arrayUnion([
+                          {
+                            'name': nameController.text.trim(),
+                            'phone': phoneController.text.trim(),
+                            'relationship': relationController.text.trim(),
+                            'addedAt': Timestamp.now(),
+                          },
+                        ]),
+                      });
+                  if (mounted) Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Contact added successfully!"),
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDialogTextField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    TextInputType inputType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: inputType,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: Colors.white70),
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        enabledBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.white24),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.lightBlueAccent),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.1),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final backgroundColor =
-        _isDarkMode ? Colors.grey[900] : const Color(0xFF3130C0);
-    final appBarColor =
-        _isDarkMode ? Colors.grey[850] : const Color(0xFF3130C0);
+    final backgroundColor = _isDarkMode
+        ? Colors.grey[900]
+        : const Color(0xFF3130C0);
+    final appBarColor = _isDarkMode
+        ? Colors.grey[850]
+        : const Color(0xFF3130C0);
     final scaffoldColor = _isDarkMode ? Colors.grey[800] : Colors.lightBlue;
 
     return Scaffold(
@@ -86,10 +188,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         color: Colors.white,
                       ),
                     ),
-                    Text(
-                      email,
-                      style: const TextStyle(color: Colors.white70),
-                    ),
+                    Text(email, style: const TextStyle(color: Colors.white70)),
                   ],
                 ),
               ],
@@ -98,71 +197,90 @@ class _SettingsPageState extends State<SettingsPage> {
             const Text(
               "Notification Settings",
               style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 10),
             ListTile(
               leading: const Icon(Icons.edit, color: Colors.white),
-              title: const Text("Edit profile",
-                  style: TextStyle(color: Colors.white)),
+              title: const Text(
+                "Edit profile",
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const EditProfileScreen()),
+                    builder: (context) => const EditProfileScreen(),
+                  ),
                 );
               },
             ),
             ListTile(
               leading: const Icon(Icons.lock, color: Colors.white),
-              title: const Text("Change password",
-                  style: TextStyle(color: Colors.white)),
+              title: const Text(
+                "Change password",
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {},
             ),
             ListTile(
               leading: const Icon(Icons.language, color: Colors.white),
-              title: const Text("Languages",
-                  style: TextStyle(color: Colors.white)),
+              title: const Text(
+                "Languages",
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {},
             ),
             ListTile(
               leading: const Icon(Icons.contacts, color: Colors.white),
-              title: const Text("Add emergency contact",
-                  style: TextStyle(color: Colors.white)),
-              onTap: () {},
+              title: const Text(
+                "Add emergency contact",
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: _addEmergencyContact,
             ),
             SwitchListTile(
-              title: const Text("Share location",
-                  style: TextStyle(color: Colors.white)),
+              title: const Text(
+                "Share location",
+                style: TextStyle(color: Colors.white),
+              ),
               value: true,
               onChanged: (value) {},
             ),
             const Text(
               "More",
               style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 10),
             ListTile(
               leading: const Icon(Icons.info_outline, color: Colors.white),
-              title:
-                  const Text("About us", style: TextStyle(color: Colors.white)),
+              title: const Text(
+                "About us",
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {},
             ),
             ListTile(
               leading: const Icon(Icons.privacy_tip, color: Colors.white),
-              title: const Text("Privacy policy",
-                  style: TextStyle(color: Colors.white)),
+              title: const Text(
+                "Privacy policy",
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {},
             ),
             ListTile(
               leading: const Icon(Icons.article, color: Colors.white),
-              title: const Text("Terms and conditions",
-                  style: TextStyle(color: Colors.white)),
+              title: const Text(
+                "Terms and conditions",
+                style: TextStyle(color: Colors.white),
+              ),
               onTap: () {},
             ),
             const SizedBox(height: 30),
@@ -179,9 +297,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 if (mounted) {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const LoginPage(),
-                    ),
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
                     (route) => false,
                   );
                 }
@@ -194,29 +310,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        height: 60,
-        backgroundColor: scaffoldColor,
-        selectedIndex: 0,
-        onDestinationSelected: (index) {
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const UserDashboard()),
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const UserProfile()),
-            );
-          }
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-          NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
+      bottomNavigationBar: CustomBottomNavBar(currentIndex: 0, role: role),
     );
   }
 }
