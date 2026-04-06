@@ -58,7 +58,7 @@ class _LoginPageState extends State<LoginPage> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => const DispatcherApp(),
+                builder: (context) => const DispatcherPage(),
               ), // Different page
             );
           }

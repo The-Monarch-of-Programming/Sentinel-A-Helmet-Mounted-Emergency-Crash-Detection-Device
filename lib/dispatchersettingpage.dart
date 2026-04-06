@@ -218,7 +218,7 @@ class _DispatchersettingpageState extends State<Dispatchersettingpage> {
           if (index == 1) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const DispatcherApp()),
+              MaterialPageRoute(builder: (context) => const DispatcherPage()),
             );
           } else if (index == 2) {
             Navigator.push(
