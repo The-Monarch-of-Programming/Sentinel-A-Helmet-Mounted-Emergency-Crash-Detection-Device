@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dispatcheditprofile.dart';
 import 'dispatchprofile.dart';
 import 'dispatchersettingpage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -27,7 +26,120 @@ class _DispatcherAppState extends State<DispatcherApp> {
   }
 }
 
-// --- Dashboard Page ---
+//  Specific Crash Details Page
+class CrashDetailsPage extends StatelessWidget {
+  final Map<String, String> details;
+
+  const CrashDetailsPage({super.key, required this.details});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Details: ${details['location'] ?? details['name']}"),
+        backgroundColor: const Color(0xFF1A1A72),
+      ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF3B4CCF), Color(0xFF1A1A72)],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Card(
+            color: Colors.white.withOpacity(0.1),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Center(
+                    child: Icon(
+                      Icons.report_problem,
+                      size: 60,
+                      color: Colors.orangeAccent,
+                    ),
+                  ),
+                  const Divider(height: 40, color: Colors.white24),
+
+                  // Dynamically list all data found in the Map
+                  ...details.entries
+                      .map(
+                        (entry) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                entry.key.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.cyanAccent,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              Text(
+                                entry.value,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 248, 191, 1),
+                      ),
+                      child: const Text(
+                        "Respond to Alert",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 0, 247, 255),
+                      ),
+                      child: const Text(
+                        "Back to List",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+//Dashboard Page
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -83,10 +195,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: const [
                       StatBox(label: "Active Alerts", value: "12"),
                       StatBox(label: "Resolved", value: "4"),
+                      StatBox(label: "In Progress", value: "8"),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  const StatBox(label: "In Progress", value: "4"),
                 ],
               ),
             ),
@@ -98,12 +209,10 @@ class _DashboardPageState extends State<DashboardPage> {
               subtitle: "Manage Dispatch Task",
               icon: Icons.list_alt_rounded,
               color: const Color(0xFF192BB6),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AllTasksPage()),
-                );
-              },
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AllTasksPage()),
+              ),
             ),
             const SizedBox(height: 10),
             ActionTile(
@@ -111,14 +220,12 @@ class _DashboardPageState extends State<DashboardPage> {
               subtitle: "View Urgent Alerts",
               icon: Icons.notifications_active,
               color: const Color(0xFF862134),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const EmergencyAlerts(),
-                  ),
-                );
-              },
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EmergencyAlerts(),
+                ),
+              ),
             ),
           ],
         ),
@@ -138,10 +245,21 @@ class AllTasksPage extends StatefulWidget {
 
 class _AllTasksPageState extends State<AllTasksPage> {
   final List<Map<String, String>> tasks = const [
-    {"location": "Sta. Mesa", "time": "3:28:59 pm"},
-    {"location": "San Jose Del Monte", "time": "5:08:45 pm"},
-    {"location": "Bangued", "time": "10:28:57 pm"},
-    {"location": "Taytay", "time": "12:28:01 pm"},
+    {
+      "location": "Sta. Mesa",
+      "time": "3:28:59 pm",
+      "detail": "Multiple vehicle collision.",
+    },
+    {
+      "location": "San Jose Del Monte",
+      "time": "5:08:45 pm",
+      "detail": "Overturned truck blocking lane.",
+    },
+    {
+      "location": "Bangued",
+      "time": "10:28:57 pm",
+      "detail": "Engine fire reported.",
+    },
   ];
 
   @override
@@ -223,7 +341,14 @@ class _AllTasksPageState extends State<AllTasksPage> {
           Expanded(
             flex: 2,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CrashDetailsPage(details: task),
+                  ),
+                );
+              },
               child: const Text("View", style: TextStyle(fontSize: 10)),
             ),
           ),
@@ -243,8 +368,20 @@ class EmergencyAlerts extends StatefulWidget {
 
 class _EmergencyAlertsState extends State<EmergencyAlerts> {
   final List<Map<String, String>> tasks = const [
-    {"name": "Sta. Mesa", "contact": "0961 212 1223"},
-    {"name": "San Jose Del Monte", "contact": "0947 234 2323"},
+    {
+      "name": "Sta. Mesa",
+      "contact": "0961 212 1223",
+      "status": "CRITICAL",
+      "detail": "Multiple vehicle collision.",
+      "time": "3:28:59 pm",
+    },
+    {
+      "name": "San Jose Del Monte",
+      "contact": "0947 234 2323",
+      "status": "CRITICAL",
+      "detail": "Truck accident.",
+      "time": "5:08:45 pm",
+    },
   ];
 
   @override
@@ -323,7 +460,15 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.red,
                                     ),
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              CrashDetailsPage(details: task),
+                                        ),
+                                      );
+                                    },
                                     child: const Text(
                                       "View",
                                       style: TextStyle(
@@ -350,7 +495,7 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
   }
 }
 
-// --- CUSTOM BOTTOM NAVIGATION BAR (FIXED) ---
+// --- Custom Bottom Nav Bar ---
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
   const CustomBottomNavBar({super.key, required this.currentIndex});
@@ -364,8 +509,7 @@ class CustomBottomNavBar extends StatelessWidget {
       currentIndex: currentIndex,
       type: BottomNavigationBarType.fixed,
       onTap: (index) {
-        if (index == currentIndex) return; // Do nothing if already on the page
-
+        if (index == currentIndex) return;
         if (index == 0) {
           Navigator.pushReplacement(
             context,
@@ -374,7 +518,6 @@ class CustomBottomNavBar extends StatelessWidget {
             ),
           );
         } else if (index == 1) {
-          // Clears the stack to return to Dashboard
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const DispatcherApp()),
@@ -395,7 +538,6 @@ class CustomBottomNavBar extends StatelessWidget {
           icon: Icon(Icons.home_filled),
           label: 'Dashboard',
         ),
-
         BottomNavigationBarItem(
           icon: Icon(Icons.account_circle),
           label: 'Profile',
