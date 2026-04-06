@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'dispatcheditprofile.dart';
+import 'dispatchprofile.dart';
+import 'dispatchersettingpage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'widgets/bottomnavbar.dart';
+
+void main() {
+  runApp(const DispatcherApp());
+}
 
 class DispatcherApp extends StatefulWidget {
   const DispatcherApp({super.key});
@@ -21,7 +27,7 @@ class _DispatcherAppState extends State<DispatcherApp> {
   }
 }
 
-//Dashboard Page
+// --- Dashboard Page ---
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -117,13 +123,12 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ),
-      // Reusable Navigation Bar
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1, role: 'dispatcher'),
+      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
     );
   }
 }
 
-//All task Page
+// --- All Tasks Page ---
 class AllTasksPage extends StatefulWidget {
   const AllTasksPage({super.key});
 
@@ -182,8 +187,7 @@ class _AllTasksPageState extends State<AllTasksPage> {
           ],
         ),
       ),
-      //Reusable Bottom Navigation Bar
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1, role: 'dispatcher'),
+      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
     );
   }
 
@@ -229,7 +233,7 @@ class _AllTasksPageState extends State<AllTasksPage> {
   }
 }
 
-//Emergency Alerts
+// --- Emergency Alerts ---
 class EmergencyAlerts extends StatefulWidget {
   const EmergencyAlerts({super.key});
 
@@ -317,12 +321,7 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
                                   flex: 2,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color.fromARGB(
-                                        255,
-                                        0,
-                                        0,
-                                        0,
-                                      ),
+                                      backgroundColor: Colors.red,
                                     ),
                                     onPressed: () {},
                                     child: const Text(
@@ -346,17 +345,69 @@ class _EmergencyAlertsState extends State<EmergencyAlerts> {
           ],
         ),
       ),
-
-      bottomNavigationBar: CustomBottomNavBar(currentIndex: 1, role: 'dispatcher'),
+      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
     );
   }
 }
 
-//Reusable Components-
+// --- CUSTOM BOTTOM NAVIGATION BAR (FIXED) ---
+class CustomBottomNavBar extends StatelessWidget {
+  final int currentIndex;
+  const CustomBottomNavBar({super.key, required this.currentIndex});
 
+  @override
+  Widget build(BuildContext context) {
+    return BottomNavigationBar(
+      backgroundColor: const Color.fromARGB(255, 0, 204, 255),
+      selectedItemColor: Colors.black,
+      unselectedItemColor: Colors.black54,
+      currentIndex: currentIndex,
+      type: BottomNavigationBarType.fixed,
+      onTap: (index) {
+        if (index == currentIndex) return; // Do nothing if already on the page
+
+        if (index == 0) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const Dispatchersettingpage(),
+            ),
+          );
+        } else if (index == 1) {
+          // Clears the stack to return to Dashboard
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const DispatcherApp()),
+            (route) => false,
+          );
+        } else if (index == 2) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const DispatchUserProfile(),
+            ),
+          );
+        }
+      },
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home_filled),
+          label: 'Dashboard',
+        ),
+
+        BottomNavigationBarItem(
+          icon: Icon(Icons.account_circle),
+          label: 'Profile',
+        ),
+      ],
+    );
+  }
+}
+
+// --- Reusable Components ---
 class ActionTile extends StatelessWidget {
-  final String title;
-  final String subtitle;
+  final String title, subtitle;
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
@@ -411,10 +462,8 @@ class ActionTile extends StatelessWidget {
   }
 }
 
-//
 class StatBox extends StatelessWidget {
-  final String label;
-  final String value;
+  final String label, value;
   const StatBox({super.key, required this.label, required this.value});
 
   @override
