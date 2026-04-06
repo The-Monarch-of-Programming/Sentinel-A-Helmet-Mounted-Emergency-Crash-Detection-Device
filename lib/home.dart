@@ -12,7 +12,10 @@ class UserDashboard extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: const Color(0xFF3130C0),
-        leading: Image.asset('assets/logo.png', width: 10, height: 10),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset('assets/logo.png', width: 32, height: 32),
+        ),
         title: const Text('Dashboard'),
         centerTitle: true,
         actions: <Widget>[
@@ -108,6 +111,32 @@ class UserDashboard extends StatelessWidget {
           NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
+<<<<<<< Updated upstream
+=======
+      bottomNavigationBar: NavigationBar(
+        height: 60,
+        backgroundColor: Colors.lightBlue,
+        selectedIndex: 1,
+        onDestinationSelected: (index) {
+          if (index == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsPage()),
+            );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const UserProfile()),
+            );
+          }
+        },
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+          NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
+>>>>>>> Stashed changes
     );
   }
 }
