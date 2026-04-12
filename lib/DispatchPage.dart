@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dispatcheditprofile.dart';
-import 'dispatchprofile.dart';
-import 'dispatchersettingpage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dispatchprofile.dart';
@@ -1079,12 +1076,47 @@ class EmergencyAlerts extends StatelessWidget {
           ],
         ),
       ),
+<<<<<<< HEAD
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
+=======
+>>>>>>> 770f34e6b740327cc5fada233e0942c5f266b778
     );
   }
 }
 
+<<<<<<< HEAD
 // --- CUSTOM BOTTOM NAVIGATION BAR (FIXED) ---
+=======
+// --- NAVIGATION & TILES ---
+
+class _ActionTile extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionTile({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      tileColor: color,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      leading: Icon(icon, color: Colors.white, size: 30),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      trailing: const Icon(Icons.chevron_right, color: Colors.white70),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+    );
+  }
+}
+
+>>>>>>> 770f34e6b740327cc5fada233e0942c5f266b778
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
   const CustomBottomNavBar({super.key, required this.currentIndex});
