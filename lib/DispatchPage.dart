@@ -5,6 +5,10 @@ import 'dispatchprofile.dart';
 import 'dispatchersettingpage.dart';
 import 'package:intl/intl.dart';
 
+void main() {
+  runApp(const DispatcherPage());
+}
+
 class DispatcherPage extends StatelessWidget {
   const DispatcherPage({super.key});
 
