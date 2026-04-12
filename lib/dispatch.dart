@@ -57,22 +57,22 @@ class DashboardPage extends StatelessWidget {
                 color: const Color(0xFF5A6AF1),
                 borderRadius: BorderRadius.circular(25),
               ),
-              child: Column(
+              child: const Column(
                 children: [
-                  const Text(
+                  Text(
                     "Dispatcher",
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400),
                   ),
-                  const Divider(color: Colors.white24, height: 30),
+                  Divider(color: Colors.white24, height: 30),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: const [
+                    children: [
                       StatBox(label: "Active Alerts", value: "12"),
                       StatBox(label: "Resolved", value: "4"),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  const StatBox(label: "In Progress", value: "4"),
+                  SizedBox(height: 20),
+                  StatBox(label: "In Progress", value: "4"),
                 ],
               ),
             ),
@@ -83,18 +83,18 @@ class DashboardPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             // Action Buttons
-            ActionTile(
+            const ActionTile(
               title: "View All Task",
               subtitle: "Manage Dispatch Task",
               icon: Icons.list_alt_rounded,
-              color: const Color(0xFF192BB6),
+              color: Color(0xFF192BB6),
             ),
             const SizedBox(height: 15),
-            ActionTile(
+            const ActionTile(
               title: "Emergency Alerts",
               subtitle: "View Urgent Alerts",
               icon: Icons.notifications_active,
-              color: const Color(0xFF862134),
+              color: Color(0xFF862134),
             ),
           ],
         ),

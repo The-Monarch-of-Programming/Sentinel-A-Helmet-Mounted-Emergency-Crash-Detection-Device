@@ -58,12 +58,12 @@ class _EditProfileState extends State<EditProfileScreen> {
             .collection('users')
             .doc(user.uid)
             .update({
-              'name': _nameController.text.trim(),
-              'phoneno': _phoneController.text.trim(),
-              'dob': _dobController.text.trim(),
-              'bloodType': _selectedBloodType,
-              // email is usually not updated here as it's linked to Auth
-            });
+          'name': _nameController.text.trim(),
+          'phoneno': _phoneController.text.trim(),
+          'dob': _dobController.text.trim(),
+          'bloodType': _selectedBloodType,
+          // email is usually not updated here as it's linked to Auth
+        });
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Profile Updated Successfully!")),
@@ -94,23 +94,22 @@ class _EditProfileState extends State<EditProfileScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            Stack(
+            const Stack(
               alignment: Alignment.bottomRight,
               children: [
                 CircleAvatar(
                   radius: 60,
                   backgroundColor: Colors.white,
-                  child: const Icon(Icons.person, size: 60, color: Colors.grey),
+                  child: Icon(Icons.person, size: 60, color: Colors.grey),
                 ),
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: Colors.lightBlue,
-                  child: const Icon(Icons.edit, color: Colors.white),
+                  child: Icon(Icons.edit, color: Colors.white),
                 ),
               ],
             ),
             const SizedBox(height: 30),
-
             _buildTextField("Name", _nameController),
             _buildTextField("Email", _emailController),
             _buildTextField("Address", _addressController),
@@ -120,7 +119,6 @@ class _EditProfileState extends State<EditProfileScreen> {
               "Blood Type",
               (val) => setState(() => _selectedBloodType = val),
             ),
-
             const SizedBox(height: 30),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -157,7 +155,6 @@ class _EditProfileState extends State<EditProfileScreen> {
           labelText: label,
           filled: true,
           fillColor: Colors.white,
-
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
@@ -233,7 +230,7 @@ class _EditProfileState extends State<EditProfileScreen> {
             builder: (context, child) {
               return Theme(
                 data: Theme.of(context).copyWith(
-                  colorScheme: ColorScheme.light(
+                  colorScheme: const ColorScheme.light(
                     primary: Colors.lightBlue,
                     onPrimary: Colors.white,
                     onSurface: Colors.black,
