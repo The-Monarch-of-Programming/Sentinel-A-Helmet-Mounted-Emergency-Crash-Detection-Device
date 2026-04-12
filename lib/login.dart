@@ -59,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
               context,
               MaterialPageRoute(
                   builder: (context) =>
-                      const DispatcherPage()), // Different page
+                      const DispatcherApp()), // Different page
             );
           }
         } else {
