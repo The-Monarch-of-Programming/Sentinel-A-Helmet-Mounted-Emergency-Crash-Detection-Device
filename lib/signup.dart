@@ -43,27 +43,27 @@ class _SignupPageState extends State<SignupPage> {
 
     try {
       // Create user in Firebase Authentication
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
-          );
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
       // Save the Name and Email to Cloud Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
           .set({
-            'uid': userCredential.user!.uid,
-            'name': _nameController.text.trim(),
-            'email': _emailController.text.trim(),
-            'phoneno': _phoneNumber.text.trim(),
-            'address': _address.text.trim(),
-            'dob': _dobController.text,
-            'bloodType': _selectedBloodType ?? 'Unknown',
-            'createdAt': DateTime.now(),
-            'role': 'driver',
-          });
+        'uid': userCredential.user!.uid,
+        'name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'phoneno': _phoneNumber.text.trim(),
+        'address': _address.text.trim(),
+        'dob': _dobController.text,
+        'bloodType': _selectedBloodType ?? 'Unknown',
+        'createdAt': DateTime.now(),
+        'role': 'driver',
+      });
 
       // Navigate to Login or Dashboard after success
       if (mounted) {
@@ -106,16 +106,16 @@ class _SignupPageState extends State<SignupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: Color(0xFF3031C0),
+      backgroundColor: const Color(0xFF3031C0),
       body: Container(
-        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
         height: MediaQuery.of(context).size.height - 50,
         width: double.infinity,
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
-              Column(
+              const Column(
                 children: <Widget>[
                   Text(
                     "Sign up",
@@ -158,10 +158,10 @@ class _SignupPageState extends State<SignupPage> {
                 ],
               ),
               Container(
-                padding: EdgeInsets.only(top: 3, left: 3),
+                padding: const EdgeInsets.only(top: 3, left: 3),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(50),
-                  border: Border(
+                  border: const Border(
                     bottom: BorderSide(color: Colors.black),
                     top: BorderSide(color: Colors.black),
                     left: BorderSide(color: Colors.black),
@@ -179,7 +179,7 @@ class _SignupPageState extends State<SignupPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(50),
                   ),
-                  child: Text(
+                  child: const Text(
                     "Sign up",
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
@@ -192,15 +192,16 @@ class _SignupPageState extends State<SignupPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Text("Already have an account?"),
+                  const Text("Already have an account?"),
                   TextButton(
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => LoginPage()),
+                        MaterialPageRoute(
+                            builder: (context) => const LoginPage()),
                       );
                     },
-                    child: Text(
+                    child: const Text(
                       'Login',
                       style: TextStyle(color: Colors.lightBlue),
                     ),
@@ -226,11 +227,14 @@ class _SignupPageState extends State<SignupPage> {
       children: <Widget>[
         Text(
           label,
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: Colors.lightBlue),
+          style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: Colors.lightBlue),
         ),
-        SizedBox(height: 5),
+        const SizedBox(height: 5),
         TextField(
-          style: TextStyle(color: Colors.lightBlue),
+          style: const TextStyle(color: Colors.lightBlue),
           obscureText: obscureText,
           controller: controller,
           maxLines: maxLines,
@@ -241,15 +245,15 @@ class _SignupPageState extends State<SignupPage> {
               vertical: maxLines > 1 ? 15 : 0,
               horizontal: 10,
             ),
-            enabledBorder: OutlineInputBorder(
+            enabledBorder: const OutlineInputBorder(
               borderSide: BorderSide(color: Colors.grey),
             ),
-            border: OutlineInputBorder(
+            border: const OutlineInputBorder(
               borderSide: BorderSide(color: Colors.grey),
             ),
           ),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
       ],
     );
   }
@@ -282,7 +286,7 @@ class _SignupPageState extends State<SignupPage> {
             builder: (context, child) {
               return Theme(
                 data: Theme.of(context).copyWith(
-                  colorScheme: ColorScheme.light(
+                  colorScheme: const ColorScheme.light(
                     primary: Colors.lightBlue,
                     onPrimary: Colors.white,
                     onSurface: Colors.black,

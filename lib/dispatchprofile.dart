@@ -179,7 +179,7 @@ class _DispatchUserProfileState extends State<DispatchUserProfile> {
           } else if (index == 1) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const DispatcherApp()),
+              MaterialPageRoute(builder: (context) => const DispatcherPage()),
             );
           } else if (index == 2) {}
         },
