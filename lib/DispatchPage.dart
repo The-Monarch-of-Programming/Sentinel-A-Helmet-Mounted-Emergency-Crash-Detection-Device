@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dispatchprofile.dart';
 import 'dispatchersettingpage.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DispatcherPage extends StatelessWidget {
   const DispatcherPage({super.key});
@@ -162,7 +163,7 @@ class DashboardPage extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
+      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
     );
   }
 }
@@ -305,6 +306,9 @@ class CrashDetailsPage extends StatelessWidget {
       final String? currentUserUid = FirebaseAuth.instance.currentUser?.uid;
       if (currentUserUid == null) throw "You must be logged in.";
 
+      final messenger = ScaffoldMessenger.of(context);
+      final navigator = Navigator.of(context);
+
       await FirebaseFirestore.instance
           .collection('crash_records')
           .doc(details['id'])
@@ -317,9 +321,9 @@ class CrashDetailsPage extends StatelessWidget {
 
       if (!context.mounted) return;
 
-      Navigator.of(context).pop();
+      navigator.pop();
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text("Alert Resolved: Dispatched to $selectedHospital"),
           backgroundColor: Colors.green,
@@ -337,7 +341,11 @@ class CrashDetailsPage extends StatelessWidget {
     }
   }
 
-  void _showHospitalPicker(BuildContext context) {
+  void _showHospitalPicker(
+    BuildContext context,
+    String emergencyPhone,
+    String driverName,
+  ) {
     String tempSelection = "Quezon City General Hospital";
     List<String> hospitals = [
       "Quezon City General Hospital",
@@ -372,15 +380,49 @@ class CrashDetailsPage extends StatelessWidget {
             child: const Text("CANCEL"),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              _respondToIncident(context, tempSelection);
+
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+
+              await _respondToIncident(context, tempSelection);
+
+              if (emergencyPhone != "No Number" && emergencyPhone != "N/A") {
+                final String customMessage =
+                    "Sentinel Alert: $driverName has been involved in an emergency. "
+                    "A responder has been dispatched and they are being sent to $tempSelection.";
+
+                sendHospitalSMS(emergencyPhone, customMessage);
+              }
             },
             child: const Text("CONFIRM"),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> sendHospitalSMS(String phone, String message) async {
+    final String cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+
+    final Uri smsUri = Uri(
+      scheme: 'sms',
+      path: cleanPhone,
+      queryParameters: <String, String>{'body': message},
+    );
+
+    try {
+      if (await canLaunchUrl(smsUri)) {
+        await launchUrl(smsUri);
+      } else {
+        final String url =
+            "sms:$cleanPhone?body=${Uri.encodeComponent(message)}";
+        await launchUrl(Uri.parse(url));
+      }
+    } catch (e) {
+      print("Error launching SMS: $e");
+    }
   }
 
   @override
@@ -428,6 +470,9 @@ class CrashDetailsPage extends StatelessWidget {
                     ),
                     builder: (context, snapshot) {
                       final data = snapshot.data;
+                      final String driverName = data?['name'] ?? "Driver";
+                      final String phone =
+                          data?['emergency_phone'] ?? "No Number";
                       final bool loading =
                           snapshot.connectionState == ConnectionState.waiting;
                       return Column(
@@ -450,6 +495,32 @@ class CrashDetailsPage extends StatelessWidget {
                             isWarning:
                                 data?['emergency_phone'] == "No Contact Set",
                           ),
+                          const SizedBox(height: 20),
+
+                          if (details['status'] == 'ongoing')
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.greenAccent,
+                                  foregroundColor: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.send_rounded),
+                                label: const Text(
+                                  "RESPOND TO INCIDENT",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                onPressed: () => _showHospitalPicker(
+                                  context,
+                                  phone,
+                                  driverName,
+                                ),
+                              ),
+                            ),
                         ],
                       );
                     },
@@ -480,29 +551,6 @@ class CrashDetailsPage extends StatelessWidget {
                         : details['hospital'],
                     isWarning: details['hospital'] == null,
                   ),
-
-                  const SizedBox(height: 20),
-
-                  if (details['status'] == 'ongoing')
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.greenAccent,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.send_rounded),
-                        label: const Text(
-                          "RESPOND TO INCIDENT",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        onPressed: () => _showHospitalPicker(context),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -1123,21 +1171,20 @@ class CustomBottomNavBar extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       onTap: (index) {
         if (index == currentIndex) return;
-        // Navigation Logic
         Widget page;
         switch (index) {
+          // case 0:
+          //   Navigator.pushReplacement(
+          //     context,
+          //     MaterialPageRoute(
+          //       builder: (context) => const Dispatchersettingpage(),
+          //     ),
+          //   );
+          //   break;
           case 0:
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const Dispatchersettingpage(),
-              ),
-            );
-            break;
-          case 1:
             page = const DashboardPage();
             break;
-          case 2:
+          case 1:
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -1150,7 +1197,7 @@ class CustomBottomNavBar extends StatelessWidget {
         }
       },
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        // BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         BottomNavigationBarItem(
           icon: Icon(Icons.home_filled),
           label: 'Dashboard',

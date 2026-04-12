@@ -374,10 +374,13 @@ class _UserProfileState extends State<UserProfile> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: const Color(0xFF3130C0),
-        leading: Image.asset('assets/logo.png', width: 10, height: 10),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset('assets/logo.png'),
+        ),
         title: const Text('Profile'),
         centerTitle: true,
-        actions: [
+        actions: <Widget>[
           IconButton(
             onPressed: () {},
             icon: const Icon(Icons.location_on),
