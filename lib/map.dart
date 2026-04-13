@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'home.dart';
 import 'profile.dart';
 import 'settings.dart';
+import 'widgets/bottomnavbar.dart';
 
 class MapPage extends StatefulWidget {
   final bool isDispatcher;
@@ -303,7 +304,6 @@ class _MapPageState extends State<MapPage> {
         leading: Image.asset('assets/logo.png', width: 10, height: 10),
         title: const Text('Map'),
         centerTitle: true,
-        actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.location_on), color: Colors.lightBlue)],
       ),
       body: Stack(
         children: [
@@ -343,23 +343,7 @@ class _MapPageState extends State<MapPage> {
           ),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        height: 60,
-        backgroundColor: Colors.lightBlue,
-        selectedIndex: 3,
-        onDestinationSelected: (index) {
-          if (index == 3) return;
-          if (index == 0) Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
-          else if (index == 1) Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const UserDashboard()));
-          else if (index == 2) Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const UserProfile()));
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-          NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
-        ],
-      ),
+      bottomNavigationBar: CustomBottomNavBar(currentIndex: 3, role: 'driver'),
     );
   }
 }

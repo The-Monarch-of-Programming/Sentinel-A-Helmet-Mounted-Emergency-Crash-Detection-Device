@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dispatchprofile.dart';
-import 'dispatchersettingpage.dart';
 import 'dispatcher_map.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DispatcherPage extends StatelessWidget {
   const DispatcherPage({super.key});
@@ -37,7 +37,6 @@ class DispatcherPage extends StatelessWidget {
 }
 
 // --- MODELS ---
-// Using a class instead of Map<String, String> makes data much safer
 class Incident {
   final String title;
   final String subtitle;
@@ -53,7 +52,6 @@ class Incident {
 }
 
 // --- SHARED UI COMPONENTS ---
-
 class AppBackground extends StatelessWidget {
   final Widget child;
   const AppBackground({super.key, required this.child});
@@ -115,9 +113,8 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stream = FirebaseFirestore.instance
-        .collection('crash_records')
-        .snapshots();
+    final stream =
+        FirebaseFirestore.instance.collection('crash_records').snapshots();
 
     return Scaffold(
       appBar: AppBar(
@@ -151,7 +148,6 @@ class DashboardPage extends StatelessWidget {
 
           final docs = snapshot.data!.docs;
 
-          // Logic for status counts
           int active = 0, progress = 0, resolved = 0;
           for (var doc in docs) {
             final data = doc.data() as Map<String, dynamic>;
@@ -172,7 +168,7 @@ class DashboardPage extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
+      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
     );
   }
 }
@@ -265,10 +261,8 @@ class CrashDetailsPage extends StatelessWidget {
       return {"name": "Unknown", "phone": "N/A", "plate": "N/A"};
     }
     try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (userDoc.exists) {
         final userData = userDoc.data() as Map<String, dynamic>;
         final List<dynamic> contacts = userData['emergencyContacts'] ?? [];
@@ -297,10 +291,8 @@ class CrashDetailsPage extends StatelessWidget {
       return "Awaiting Assignment";
     }
     try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       return userDoc.exists ? (userDoc.get('name') ?? "Unknown") : "Not Found";
     } catch (e) {
       return "Error";
@@ -315,21 +307,24 @@ class CrashDetailsPage extends StatelessWidget {
       final String? currentUserUid = FirebaseAuth.instance.currentUser?.uid;
       if (currentUserUid == null) throw "You must be logged in.";
 
+      final messenger = ScaffoldMessenger.of(context);
+      final navigator = Navigator.of(context);
+
       await FirebaseFirestore.instance
           .collection('crash_records')
           .doc(details['id'])
           .update({
-            'status': 'responded',
-            'dispatcher_id': currentUserUid,
-            'hospital': selectedHospital,
-            'respondedAt': FieldValue.serverTimestamp(),
-          });
+        'status': 'responded',
+        'dispatcher_id': currentUserUid,
+        'hospital': selectedHospital,
+        'respondedAt': FieldValue.serverTimestamp(),
+      });
 
       if (!context.mounted) return;
 
-      Navigator.of(context).pop();
+      navigator.pop();
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text("Alert Resolved: Dispatched to $selectedHospital"),
           backgroundColor: Colors.green,
@@ -347,7 +342,11 @@ class CrashDetailsPage extends StatelessWidget {
     }
   }
 
-  void _showHospitalPicker(BuildContext context) {
+  void _showHospitalPicker(
+    BuildContext context,
+    String emergencyPhone,
+    String driverName,
+  ) {
     String tempSelection = "Quezon City General Hospital";
     List<String> hospitals = [
       "Quezon City General Hospital",
@@ -382,15 +381,49 @@ class CrashDetailsPage extends StatelessWidget {
             child: const Text("CANCEL"),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              _respondToIncident(context, tempSelection);
+
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+
+              await _respondToIncident(context, tempSelection);
+
+              if (emergencyPhone != "No Number" && emergencyPhone != "N/A") {
+                final String customMessage =
+                    "Sentinel Alert: $driverName has been involved in an emergency. "
+                    "A responder has been dispatched and they are being sent to $tempSelection.";
+
+                sendHospitalSMS(emergencyPhone, customMessage);
+              }
             },
             child: const Text("CONFIRM"),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> sendHospitalSMS(String phone, String message) async {
+    final String cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+
+    final Uri smsUri = Uri(
+      scheme: 'sms',
+      path: cleanPhone,
+      queryParameters: <String, String>{'body': message},
+    );
+
+    try {
+      if (await canLaunchUrl(smsUri)) {
+        await launchUrl(smsUri);
+      } else {
+        final String url =
+            "sms:$cleanPhone?body=${Uri.encodeComponent(message)}";
+        await launchUrl(Uri.parse(url));
+      }
+    } catch (e) {
+      print("Error launching SMS: $e");
+    }
   }
 
   @override
@@ -425,19 +458,20 @@ class CrashDetailsPage extends StatelessWidget {
                     ),
                   ),
                   const Divider(height: 40, color: Colors.white24),
-
                   _buildInfoTile("Date & Time", formattedDate),
                   _buildInfoTile(
                     "Location",
                     details['location']?.toString() ?? "Unknown",
                   ),
-
                   FutureBuilder<Map<String, dynamic>>(
                     future: _getDriverFullDetails(
                       details['driver_id']?.toString(),
                     ),
                     builder: (context, snapshot) {
                       final data = snapshot.data;
+                      final String driverName = data?['name'] ?? "Driver";
+                      final String phone =
+                          data?['emergency_phone'] ?? "No Number";
                       final bool loading =
                           snapshot.connectionState == ConnectionState.waiting;
                       return Column(
@@ -460,11 +494,11 @@ class CrashDetailsPage extends StatelessWidget {
                             isWarning:
                                 data?['emergency_phone'] == "No Contact Set",
                           ),
+                          const SizedBox(height: 20),
                         ],
                       );
                     },
                   ),
-
                   FutureBuilder<String>(
                     future: _getDispatcherName(
                       details['dispatcher_id']?.toString(),
@@ -476,13 +510,11 @@ class CrashDetailsPage extends StatelessWidget {
                         name,
                         isLoading:
                             snapshot.connectionState == ConnectionState.waiting,
-                        isWarning:
-                            name.contains("Awaiting") ||
+                        isWarning: name.contains("Awaiting") ||
                             name.contains("Not Found"),
                       );
                     },
                   ),
-
                   _buildInfoTile(
                     "Target Hospital",
                     (details['hospital'] == null || details['hospital'].isEmpty)
@@ -510,7 +542,7 @@ class CrashDetailsPage extends StatelessWidget {
                           "RESPOND TO INCIDENT",
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        onPressed: () => _showHospitalPicker(context),
+                        onPressed: () => _showHospitalPicker(context, details['emergency_phone'] ?? "No Number", details['driver_id'] ?? "Driver"),
                       ),
                     ),
                 ],
@@ -646,7 +678,7 @@ class IncidentListView extends StatelessWidget {
                 ),
                 child: ListView.separated(
                   itemCount: items.length,
-                  separatorBuilder: (_, _) =>
+                  separatorBuilder: (_, __) =>
                       const Divider(color: Colors.white12),
                   itemBuilder: (context, index) {
                     final item = items[index];
@@ -657,9 +689,8 @@ class IncidentListView extends StatelessWidget {
                       subtitle: Text(item['time'] ?? ''),
                       trailing: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isEmergency
-                              ? Colors.red
-                              : Colors.blue,
+                          backgroundColor:
+                              isEmergency ? Colors.red : Colors.blue,
                         ),
                         onPressed: () => Navigator.push(
                           context,
@@ -681,7 +712,6 @@ class IncidentListView extends StatelessWidget {
   }
 }
 
-// Dummy classes to represent your routes
 class AllTasksPage extends StatefulWidget {
   const AllTasksPage({super.key});
 
@@ -690,14 +720,12 @@ class AllTasksPage extends StatefulWidget {
 }
 
 class _AllTasksPageState extends State<AllTasksPage> {
-  String _filter = 'All'; // Options: All, Ongoing, Responded
+  String _filter = 'All';
 
   @override
   Widget build(BuildContext context) {
-    // We fetch everything, then filter locally for better UI responsiveness
-    final Stream<QuerySnapshot> taskStream = FirebaseFirestore.instance
-        .collection('crash_records')
-        .snapshots();
+    final Stream<QuerySnapshot> _taskStream =
+        FirebaseFirestore.instance.collection('crash_records').snapshots();
 
     return Scaffold(
       appBar: AppBar(
@@ -705,13 +733,12 @@ class _AllTasksPageState extends State<AllTasksPage> {
         backgroundColor: const Color(0xFF3B4CCF),
       ),
       body: AppBackground(
-        // Using the reusable background from previous cleanup
         child: Column(
           children: [
             _buildFilterRow(),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: taskStream,
+                stream: _taskStream,
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return const Center(child: Text("Error loading tasks"));
@@ -722,7 +749,6 @@ class _AllTasksPageState extends State<AllTasksPage> {
 
                   final docs = snapshot.data?.docs ?? [];
 
-                  // Apply local filtering based on the 'status' field in Firestore
                   final filteredDocs = docs.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
                     if (_filter == 'All') return true;
@@ -867,7 +893,7 @@ class EmergencyAlerts extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Emergency Alerts"),
-        backgroundColor: const Color(0xFF862134), // Emergency Red
+        backgroundColor: const Color(0xFF862134),
       ),
       body: Container(
         width: double.infinity,
@@ -965,7 +991,6 @@ class EmergencyAlerts extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 15),
-
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -979,7 +1004,6 @@ class EmergencyAlerts extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-
                   Row(
                     children: [
                       const Icon(
@@ -998,7 +1022,6 @@ class EmergencyAlerts extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-
                   FutureBuilder<DocumentSnapshot>(
                     future: FirebaseFirestore.instance
                         .collection('users')
@@ -1056,9 +1079,7 @@ class EmergencyAlerts extends StatelessWidget {
                       );
                     },
                   ),
-
                   const SizedBox(height: 12),
-
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -1091,7 +1112,72 @@ class EmergencyAlerts extends StatelessWidget {
   }
 }
 
-// --- NAVIGATION & TILES ---
+// --- CUSTOM BOTTOM NAVIGATION BAR ---
+class CustomBottomNavBar extends StatelessWidget {
+  final int currentIndex;
+  const CustomBottomNavBar({super.key, required this.currentIndex});
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomNavigationBar(
+      backgroundColor: const Color(0xFF00CCFF),
+      selectedItemColor: Colors.black,
+      unselectedItemColor: Colors.black54,
+      currentIndex: currentIndex,
+      type: BottomNavigationBarType.fixed,
+      onTap: (index) {
+        if (index == currentIndex) return;
+        Widget page;
+        switch (index) {
+          // case 0:
+          //   Navigator.pushReplacement(
+          //     context,
+          //     MaterialPageRoute(
+          //       builder: (context) => const Dispatchersettingpage(),
+          //     ),
+          //   );
+          //   break;
+          case 0:
+            page = const DashboardPage();
+            break;
+          case 1:
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DispatchUserProfile(),
+              ),
+            );
+            break;
+          case 3:
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DispatcherMapPage(),
+              ),
+            );
+            break;
+          default:
+            break;
+        }
+      },
+      items: const [
+        // BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home_filled),
+          label: 'Dashboard',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.account_circle),
+          label: 'Profile',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.map),
+          label: 'Map',
+        ),
+      ],
+    );
+  }
+}
 
 class _ActionTile extends StatelessWidget {
   final String title;
@@ -1116,75 +1202,6 @@ class _ActionTile extends StatelessWidget {
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       trailing: const Icon(Icons.chevron_right, color: Colors.white70),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-    );
-  }
-}
-
-class CustomBottomNavBar extends StatelessWidget {
-  final int currentIndex;
-  const CustomBottomNavBar({super.key, required this.currentIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      backgroundColor: const Color(0xFF00CCFF),
-      selectedItemColor: Colors.black,
-      unselectedItemColor: Colors.black54,
-      currentIndex: currentIndex,
-      type: BottomNavigationBarType.fixed,
-      onTap: (index) {
-        if (index == currentIndex) return;
-
-        switch (index) {
-          case 0:
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const Dispatchersettingpage(),
-              ),
-            );
-            break;
-          case 1:
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const DashboardPage()),
-            );
-            break;
-          case 2:
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const DispatchUserProfile(),
-              ),
-            );
-            break;
-          case 3:
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const DispatcherMapPage(),
-              ),
-            );
-            break;
-          default:
-            break;
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_filled),
-          label: 'Dashboard',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.account_circle),
-          label: 'Profile',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.map),
-          label: 'Map',
-        ),
-      ],
     );
   }
 }

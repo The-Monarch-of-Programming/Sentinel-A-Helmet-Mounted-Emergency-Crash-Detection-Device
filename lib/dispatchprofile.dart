@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sentinel_app/DispatchPage.dart';
-import 'package:sentinel_app/dispatch.dart';
-import 'login.dart';
-import 'dispatcheditprofile.dart';
-import 'dispatchersettingpage.dart';
+import '../login.dart';
+import '../dispatcheditprofile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dispatcher_map.dart';
 
 class DispatchUserProfile extends StatefulWidget {
   const DispatchUserProfile({super.key});
@@ -66,17 +63,15 @@ class _DispatchUserProfileState extends State<DispatchUserProfile> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: const Color(0xFF3130C0),
-        leading: Image.asset('assets/logo.png', width: 10, height: 10),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset('assets/logo.png'),
+        ),
         title: const Text('Profile'),
         centerTitle: true,
-        actions: [
+        actions: <Widget>[
           IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const DispatcherMapPage()),
-              );
-            },
+            onPressed: () {},
             icon: const Icon(Icons.location_on),
             color: Colors.lightBlue,
           ),
@@ -171,35 +166,55 @@ class _DispatchUserProfileState extends State<DispatchUserProfile> {
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        height: 60,
-        backgroundColor: Colors.lightBlue,
-        selectedIndex: 2,
-        onDestinationSelected: (index) {
-          if (index == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const Dispatchersettingpage(),
-              ),
-            );
-          } else if (index == 1) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const DispatcherApp()),
-            );
-          } else if (index == 3) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const DispatcherMapPage()),
-            );
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF00CCFF),
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.black54,
+        currentIndex: 1,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          if (index == 1) return;
+          // Navigation Logic
+          Widget page;
+          switch (index) {
+            // case 0:
+            //   Navigator.pushReplacement(
+            //     context,
+            //     MaterialPageRoute(
+            //       builder: (context) => const Dispatchersettingpage(),
+            //     ),
+            //   );
+            //   break;
+            case 0:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DispatcherPage(),
+                ),
+              );
+              break;
+            case 1:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DispatchUserProfile(),
+                ),
+              );
+              break;
+            default:
+              page = const DashboardPage();
           }
         },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-          NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
+        items: const [
+          // BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_filled),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle),
+            label: 'Profile',
+          ),
         ],
       ),
     );

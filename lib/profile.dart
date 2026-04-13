@@ -1,7 +1,8 @@
-import 'login.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sentinel_app/login.dart';
+import 'widgets/bottomnavbar.dart';
 import 'home.dart';
 import 'editprofile.dart';
 import 'settings.dart';
@@ -9,6 +10,7 @@ import 'map.dart';
 
 class UserProfile extends StatefulWidget {
   const UserProfile({super.key});
+
   @override
   State<UserProfile> createState() => _UserProfileState();
 }
@@ -375,16 +377,12 @@ class _UserProfileState extends State<UserProfile> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: const Color(0xFF3130C0),
-        leading: Image.asset('assets/logo.png', width: 10, height: 10),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset('assets/logo.png'),
+        ),
         title: const Text('Profile'),
         centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.location_on),
-            color: Colors.lightBlue,
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Center(
@@ -397,14 +395,12 @@ class _UserProfileState extends State<UserProfile> {
                 child: Icon(Icons.person, size: 60, color: Colors.grey),
               ),
               const SizedBox(height: 30),
-
               _buildTextField(label: "NAME", value: name),
               _buildTextField(label: "PHONE", value: phone),
               _buildTextField(label: "EMAIL", value: email),
               _buildTextField(label: "DATE OF BIRTH", value: dob),
               _buildTextField(label: "BLOOD TYPE", value: bloodType),
               _buildTextField(label: "ADDRESS", value: address),
-
               const SizedBox(height: 30),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -477,7 +473,7 @@ class _UserProfileState extends State<UserProfile> {
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => LoginPage(),
+                        builder: (context) => const LoginPage(),
                       ),
                       (route) => false,
                     );
@@ -496,26 +492,9 @@ class _UserProfileState extends State<UserProfile> {
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        height: 60,
-        backgroundColor: Colors.lightBlue,
-        selectedIndex: 2,
-        onDestinationSelected: (index) {
-          if (index == 0) {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
-          } else if (index == 1) {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const UserDashboard()));
-          } else if (index == 3) {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const MapPage()));
-          }
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-          NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
-        ],
-      ),
+      bottomNavigationBar: role == ""
+          ? const SizedBox()
+          : CustomBottomNavBar(currentIndex: 2, role: role),
     );
   }
 

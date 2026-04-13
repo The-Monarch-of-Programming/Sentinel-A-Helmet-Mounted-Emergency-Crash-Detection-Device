@@ -97,7 +97,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       _buildHeader(),
                       const Divider(color: Colors.white24, height: 1),
                       // Data Rows
-                      ...tasks.map((task) => _buildTaskRow(task)).toList(),
+                      ...tasks.map((task) => _buildTaskRow(task)),
                     ],
                   ),
                 ),

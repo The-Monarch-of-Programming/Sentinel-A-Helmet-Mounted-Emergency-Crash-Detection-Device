@@ -3,6 +3,7 @@ import '../home.dart';
 import '../profile.dart';
 import '../settings.dart';
 import '../DispatchPage.dart';
+import '../map.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -47,6 +48,8 @@ class CustomBottomNavBar extends StatelessWidget {
             case 2:
               nextScreen = const UserProfile();
               break;
+            case 3:
+              nextScreen = const MapPage();
             default:
               return;
           }
@@ -60,6 +63,7 @@ class CustomBottomNavBar extends StatelessWidget {
           NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
           NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
           NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
         ],
       ),
     );
