@@ -1,13 +1,14 @@
-import 'package:flutter/material.dart';
 import 'login.dart';
-import 'editprofile.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'widgets/bottomnavbar.dart';
+import 'home.dart';
+import 'editprofile.dart';
+import 'settings.dart';
+import 'map.dart';
 
 class UserProfile extends StatefulWidget {
   const UserProfile({super.key});
-
   @override
   State<UserProfile> createState() => _UserProfileState();
 }
@@ -390,10 +391,10 @@ class _UserProfileState extends State<UserProfile> {
           child: Column(
             children: [
               const SizedBox(height: 30),
-              CircleAvatar(
+              const CircleAvatar(
                 radius: 60,
                 backgroundColor: Colors.white,
-                child: const Icon(Icons.person, size: 60, color: Colors.grey),
+                child: Icon(Icons.person, size: 60, color: Colors.grey),
               ),
               const SizedBox(height: 30),
 
@@ -405,7 +406,6 @@ class _UserProfileState extends State<UserProfile> {
               _buildTextField(label: "ADDRESS", value: address),
 
               const SizedBox(height: 30),
-
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.lightBlueAccent,
@@ -477,7 +477,7 @@ class _UserProfileState extends State<UserProfile> {
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const LoginPage(),
+                        builder: (context) => LoginPage(),
                       ),
                       (route) => false,
                     );
@@ -496,9 +496,26 @@ class _UserProfileState extends State<UserProfile> {
           ),
         ),
       ),
-      bottomNavigationBar: role == ""
-          ? const SizedBox()
-          : CustomBottomNavBar(currentIndex: 2, role: role),
+      bottomNavigationBar: NavigationBar(
+        height: 60,
+        backgroundColor: Colors.lightBlue,
+        selectedIndex: 2,
+        onDestinationSelected: (index) {
+          if (index == 0) {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
+          } else if (index == 1) {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const UserDashboard()));
+          } else if (index == 3) {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const MapPage()));
+          }
+        },
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+          NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
+        ],
+      ),
     );
   }
 

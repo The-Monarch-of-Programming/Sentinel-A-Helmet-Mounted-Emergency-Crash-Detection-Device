@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dispatchprofile.dart';
 import 'dispatchersettingpage.dart';
+import 'dispatcher_map.dart';
 import 'package:intl/intl.dart';
 
 class DispatcherPage extends StatelessWidget {
@@ -128,6 +129,15 @@ class DashboardPage extends StatelessWidget {
           'Dashboard',
           style: TextStyle(fontWeight: FontWeight.w300),
         ),
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const DispatcherMapPage()),
+            ),
+            icon: const Icon(Icons.location_on),
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: stream,
@@ -685,7 +695,7 @@ class _AllTasksPageState extends State<AllTasksPage> {
   @override
   Widget build(BuildContext context) {
     // We fetch everything, then filter locally for better UI responsiveness
-    final Stream<QuerySnapshot> _taskStream = FirebaseFirestore.instance
+    final Stream<QuerySnapshot> taskStream = FirebaseFirestore.instance
         .collection('crash_records')
         .snapshots();
 
@@ -701,7 +711,7 @@ class _AllTasksPageState extends State<AllTasksPage> {
             _buildFilterRow(),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: _taskStream,
+                stream: taskStream,
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return const Center(child: Text("Error loading tasks"));
@@ -849,7 +859,7 @@ class EmergencyAlerts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Stream<QuerySnapshot> _emergencyStream = FirebaseFirestore.instance
+    final Stream<QuerySnapshot> emergencyStream = FirebaseFirestore.instance
         .collection('crash_records')
         .where('status', isEqualTo: 'ongoing')
         .snapshots();
@@ -884,10 +894,11 @@ class EmergencyAlerts extends StatelessWidget {
             ),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: _emergencyStream,
+                stream: emergencyStream,
                 builder: (context, snapshot) {
-                  if (snapshot.hasError)
+                  if (snapshot.hasError) {
                     return const Center(child: Text("Error loading alerts"));
+                  }
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
@@ -1123,8 +1134,7 @@ class CustomBottomNavBar extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       onTap: (index) {
         if (index == currentIndex) return;
-        // Navigation Logic
-        Widget page;
+
         switch (index) {
           case 0:
             Navigator.pushReplacement(
@@ -1135,7 +1145,10 @@ class CustomBottomNavBar extends StatelessWidget {
             );
             break;
           case 1:
-            page = const DashboardPage();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const DashboardPage()),
+            );
             break;
           case 2:
             Navigator.pushReplacement(
@@ -1145,8 +1158,16 @@ class CustomBottomNavBar extends StatelessWidget {
               ),
             );
             break;
+          case 3:
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DispatcherMapPage(),
+              ),
+            );
+            break;
           default:
-            page = const DashboardPage();
+            break;
         }
       },
       items: const [
@@ -1158,6 +1179,10 @@ class CustomBottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(
           icon: Icon(Icons.account_circle),
           label: 'Profile',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.map),
+          label: 'Map',
         ),
       ],
     );

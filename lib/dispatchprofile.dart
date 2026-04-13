@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:sentinel_app/DispatchPage.dart';
-import '../login.dart';
-import '../dispatcheditprofile.dart';
-import '../dispatchersettingpage.dart';
+import 'package:sentinel_app/dispatch.dart';
+import 'login.dart';
+import 'dispatcheditprofile.dart';
+import 'dispatchersettingpage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dispatcher_map.dart';
 
 class DispatchUserProfile extends StatefulWidget {
   const DispatchUserProfile({super.key});
@@ -69,7 +71,12 @@ class _DispatchUserProfileState extends State<DispatchUserProfile> {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DispatcherMapPage()),
+              );
+            },
             icon: const Icon(Icons.location_on),
             color: Colors.lightBlue,
           ),
@@ -179,14 +186,20 @@ class _DispatchUserProfileState extends State<DispatchUserProfile> {
           } else if (index == 1) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const DispatcherPage()),
+              MaterialPageRoute(builder: (context) => const DispatcherApp()),
             );
-          } else if (index == 2) {}
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const DispatcherMapPage()),
+            );
+          }
         },
         destinations: const [
           NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
           NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
           NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
         ],
       ),
     );

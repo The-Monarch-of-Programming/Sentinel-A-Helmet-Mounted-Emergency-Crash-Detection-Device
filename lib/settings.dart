@@ -1,167 +1,90 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
-import 'editprofile.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'widgets/bottomnavbar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'home.dart';
+import 'profile.dart';
+import 'map.dart';
+
+class SettingsService {
+  SettingsService._();
+  static final SettingsService instance = SettingsService._();
+  static const _darkModeKey = 'dark_mode';
+  static const _notificationsKey = 'notifications_enabled';
+  final ValueNotifier<bool> isDarkMode = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> notificationsEnabled = ValueNotifier<bool>(true);
+  Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+    isDarkMode.value = prefs.getBool(_darkModeKey) ?? false;
+    notificationsEnabled.value = prefs.getBool(_notificationsKey) ?? true;
+  }
+  Future<void> setDarkMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_darkModeKey, value);
+    isDarkMode.value = value;
+  }
+  Future<void> setNotificationsEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_notificationsKey, value);
+    notificationsEnabled.value = value;
+  }
+}
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
-
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  String name = "Loading...";
-  String email = "Loading...";
-  String role = "";
-  bool _isDarkMode = false;
+  String _userName = '';
+  String _userEmail = '';
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
+    _loadUserData();
   }
 
-  Future<void> _fetchUserData() async {
+  Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      try {
-        DocumentSnapshot userData = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get(const GetOptions(source: Source.server));
-
-        if (userData.exists) {
-          Map<String, dynamic> data = userData.data() as Map<String, dynamic>;
-
-          setState(() {
-            name = data['name'] ?? 'N/A';
-            email = data['email'] ?? 'N/A';
-            role = data['role'] ?? "Not Set";
-          });
-        }
-      } catch (e) {
-        print("Error fetching data: $e");
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (doc.exists && mounted) {
+        setState(() {
+          _userName = doc.data()?['name'] ?? doc.data()?['firstName'] ?? user.displayName ?? 'User';
+          _userEmail = user.email ?? '';
+        });
+      } else if (mounted) {
+        setState(() {
+          _userName = user.displayName ?? 'User';
+          _userEmail = user.email ?? '';
+        });
       }
     }
   }
 
-  Future<void> _addEmergencyContact() async {
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController phoneController = TextEditingController();
-    final TextEditingController relationController = TextEditingController();
-
-    return showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Emergency Contact"),
-        backgroundColor: const Color(0xFF3130C0),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDialogTextField(nameController, "Full Name", Icons.person),
-              const SizedBox(height: 15),
-              _buildDialogTextField(
-                phoneController,
-                "Phone Number",
-                Icons.phone,
-                inputType: TextInputType.phone,
-              ),
-              const SizedBox(height: 15),
-              _buildDialogTextField(
-                relationController,
-                "Relationship",
-                Icons.family_restroom,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.isNotEmpty &&
-                  phoneController.text.isNotEmpty) {
-                final user = FirebaseAuth.instance.currentUser;
-                if (user != null) {
-                  await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(user.uid)
-                      .update({
-                        'emergencyContacts': FieldValue.arrayUnion([
-                          {
-                            'name': nameController.text.trim(),
-                            'phone': phoneController.text.trim(),
-                            'relationship': relationController.text.trim(),
-                            'addedAt': Timestamp.now(),
-                          },
-                        ]),
-                      });
-                  if (mounted) Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Contact added successfully!"),
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text("Save"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDialogTextField(
-    TextEditingController controller,
-    String label,
-    IconData icon, {
-    TextInputType inputType = TextInputType.text,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: inputType,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: Colors.white70),
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.white24),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.lightBlueAccent),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.1),
-      ),
-    );
+  Future<void> _logout() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Logout failed: $e')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = _isDarkMode
-        ? Colors.grey[900]
-        : const Color(0xFF3130C0);
-    final appBarColor = _isDarkMode
-        ? Colors.grey[850]
-        : const Color(0xFF3130C0);
-    final scaffoldColor = _isDarkMode ? Colors.grey[800] : Colors.lightBlue;
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: const Color(0xFF3130C0),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: appBarColor,
+        backgroundColor: const Color(0xFF3130C0),
         title: const Text('Settings'),
         centerTitle: true,
       ),
@@ -180,137 +103,82 @@ class _SettingsPageState extends State<SettingsPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(email, style: const TextStyle(color: Colors.white70)),
+                    Text(_userName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text(_userEmail, style: const TextStyle(color: Colors.white70)),
                   ],
                 ),
               ],
             ),
             const SizedBox(height: 30),
-            const Text(
-              "Notification Settings",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+            const Text("Notification Settings", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 10),
-            ListTile(
-              leading: const Icon(Icons.edit, color: Colors.white),
-              title: const Text(
-                "Edit profile",
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const EditProfileScreen(),
-                  ),
+            ListTile(leading: const Icon(Icons.edit, color: Colors.white), title: const Text("Edit profile", style: TextStyle(color: Colors.white)), onTap: () {}),
+            ListTile(leading: const Icon(Icons.lock, color: Colors.white), title: const Text("Change password", style: TextStyle(color: Colors.white)), onTap: () {}),
+            ListTile(leading: const Icon(Icons.language, color: Colors.white), title: const Text("Languages", style: TextStyle(color: Colors.white)), onTap: () {}),
+            ListTile(leading: const Icon(Icons.contacts, color: Colors.white), title: const Text("Add emergency contact", style: TextStyle(color: Colors.white)), onTap: () {}),
+            ValueListenableBuilder<bool>(
+              valueListenable: SettingsService.instance.notificationsEnabled,
+              builder: (context, enabled, _) {
+                return SwitchListTile(
+                  title: const Text("Share location", style: TextStyle(color: Colors.white)),
+                  value: enabled,
+                  activeColor: Colors.white,
+                  activeTrackColor: Colors.white24,
+                  onChanged: (value) { SettingsService.instance.setNotificationsEnabled(value); },
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.lock, color: Colors.white),
-              title: const Text(
-                "Change password",
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {},
+            ValueListenableBuilder<bool>(
+              valueListenable: SettingsService.instance.isDarkMode,
+              builder: (context, isDarkMode, _) {
+                return SwitchListTile(
+                  title: const Text("Dark mode", style: TextStyle(color: Colors.white)),
+                  value: isDarkMode,
+                  activeColor: Colors.white,
+                  activeTrackColor: Colors.white24,
+                  onChanged: (value) { SettingsService.instance.setDarkMode(value); },
+                );
+              },
             ),
-            ListTile(
-              leading: const Icon(Icons.language, color: Colors.white),
-              title: const Text(
-                "Languages",
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.contacts, color: Colors.white),
-              title: const Text(
-                "Add emergency contact",
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: _addEmergencyContact,
-            ),
-            SwitchListTile(
-              title: const Text(
-                "Share location",
-                style: TextStyle(color: Colors.white),
-              ),
-              value: true,
-              onChanged: (value) {},
-            ),
-            const Text(
-              "More",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+            const SizedBox(height: 20),
+            const Text("More", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 10),
-            ListTile(
-              leading: const Icon(Icons.info_outline, color: Colors.white),
-              title: const Text(
-                "About us",
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.privacy_tip, color: Colors.white),
-              title: const Text(
-                "Privacy policy",
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.article, color: Colors.white),
-              title: const Text(
-                "Terms and conditions",
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {},
-            ),
+            ListTile(leading: const Icon(Icons.info_outline, color: Colors.white), title: const Text("About us", style: TextStyle(color: Colors.white)), onTap: () {}),
+            ListTile(leading: const Icon(Icons.privacy_tip, color: Colors.white), title: const Text("Privacy policy", style: TextStyle(color: Colors.white)), onTap: () {}),
+            ListTile(leading: const Icon(Icons.article, color: Colors.white), title: const Text("Terms and conditions", style: TextStyle(color: Colors.white)), onTap: () {}),
             const SizedBox(height: 30),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               ),
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                if (mounted) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) => false,
-                  );
-                }
-              },
-              child: const Text(
-                "Log Out",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              onPressed: _logout,
+              child: const Text("Log Out", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: CustomBottomNavBar(currentIndex: 0, role: role),
+      bottomNavigationBar: NavigationBar(
+        height: 60,
+        backgroundColor: Colors.lightBlue,
+        selectedIndex: 0,
+        onDestinationSelected: (index) {
+          if (index == 1) {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const UserDashboard()));
+          } else if (index == 2) {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const UserProfile()));
+          } else if (index == 3) {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const MapPage()));
+          }
+        },
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+          NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
+        ],
+      ),
     );
   }
 }
