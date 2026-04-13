@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sentinel_app/DispatchPage.dart';
 import '../login.dart';
 import '../dispatcheditprofile.dart';
+import 'dispatcher_map.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -69,13 +70,6 @@ class _DispatchUserProfileState extends State<DispatchUserProfile> {
         ),
         title: const Text('Profile'),
         centerTitle: true,
-        actions: <Widget>[
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.location_on),
-            color: Colors.lightBlue,
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Center(
@@ -200,6 +194,13 @@ class _DispatchUserProfileState extends State<DispatchUserProfile> {
                   builder: (context) => const DispatchUserProfile(),
                 ),
               );
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DispatcherMapPage(),
+                ),
+              );
               break;
             default:
               page = const DashboardPage();
@@ -214,6 +215,10 @@ class _DispatchUserProfileState extends State<DispatchUserProfile> {
           BottomNavigationBarItem(
             icon: Icon(Icons.account_circle),
             label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map),
+            label: 'Map',
           ),
         ],
       ),

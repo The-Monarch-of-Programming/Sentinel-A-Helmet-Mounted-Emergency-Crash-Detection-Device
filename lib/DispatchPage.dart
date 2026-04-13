@@ -126,15 +126,6 @@ class DashboardPage extends StatelessWidget {
           'Dashboard',
           style: TextStyle(fontWeight: FontWeight.w300),
         ),
-        actions: [
-          IconButton(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const DispatcherMapPage()),
-            ),
-            icon: const Icon(Icons.location_on),
-          ),
-        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: stream,

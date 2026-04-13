@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sentinel_app/DispatchPage.dart';
-import 'package:sentinel_app/dispatch.dart';
+import 'package:sentinel_app/dispatch.dart' hide DashboardPage;
 import 'login.dart';
 import 'dispatcheditprofile.dart';
 import 'dispatchprofile.dart';
@@ -224,35 +224,66 @@ class _DispatchersettingpageState extends State<Dispatchersettingpage> {
           ],
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        height: 60,
-        backgroundColor: scaffoldColor,
-        selectedIndex: 0,
-        onDestinationSelected: (index) {
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const DispatcherApp()),
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const DispatchUserProfile(),
-              ),
-            );
-          } else if (index == 3) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const DispatcherMapPage()),
-            );
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF00CCFF),
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.black54,
+        currentIndex: 1,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          if (index == 1) return;
+          // Navigation Logic
+          Widget page;
+          switch (index) {
+            // case 0:
+            //   Navigator.pushReplacement(
+            //     context,
+            //     MaterialPageRoute(
+            //       builder: (context) => const Dispatchersettingpage(),
+            //     ),
+            //   );
+            //   break;
+            case 0:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DispatcherPage(),
+                ),
+              );
+              break;
+            case 1:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DispatchUserProfile(),
+                ),
+              );
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DispatcherMapPage(),
+                ),
+              );
+              break;
+            default:
+              page = const DashboardPage();
           }
         },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-          NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
+        items: const [
+          // BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_filled),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map),
+            label: 'Map',
+          ),
         ],
       ),
     );
