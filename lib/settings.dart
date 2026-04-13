@@ -198,7 +198,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 30),
             const Text(
-              "Notification Settings",
+              "Profile Settings",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -222,36 +222,12 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.lock, color: Colors.white),
-              title: const Text(
-                "Change password",
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.language, color: Colors.white),
-              title: const Text(
-                "Languages",
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {},
-            ),
-            ListTile(
               leading: const Icon(Icons.contacts, color: Colors.white),
               title: const Text(
                 "Add emergency contact",
                 style: TextStyle(color: Colors.white),
               ),
               onTap: _addEmergencyContact,
-            ),
-            SwitchListTile(
-              title: const Text(
-                "Share location",
-                style: TextStyle(color: Colors.white),
-              ),
-              value: true,
-              onChanged: (value) {},
             ),
             const Text(
               "More",
@@ -273,7 +249,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const AboutUsPage(),
-                  ), // Replace with your actual class name
+                  ),
                 );
               },
             ),
@@ -288,7 +264,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const PrivacyPolicyPage(),
-                  ), // Replace with your actual class name
+                  ),
                 );
               },
             ),
@@ -303,7 +279,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const TermsAndConditionsPage(),
-                  ), // Replace with your actual class name
+                  ),
                 );
               },
             ),

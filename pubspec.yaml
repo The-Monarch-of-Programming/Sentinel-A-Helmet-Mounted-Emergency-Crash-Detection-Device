@@ -15,10 +15,6 @@ dependencies:
   cloud_firestore: ^5.0.0
   intl: ^0.20.2
   url_launcher: ^6.3.0
-<<<<<<< HEAD
-  intl: ^0.20.2
-=======
->>>>>>> 770f34e6b740327cc5fada233e0942c5f266b778
 
 dev_dependencies:
   flutter_test:

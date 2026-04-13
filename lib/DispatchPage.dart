@@ -36,7 +36,6 @@ class DispatcherPage extends StatelessWidget {
 }
 
 // --- MODELS ---
-// Using a class instead of Map<String, String> makes data much safer
 class Incident {
   final String title;
   final String subtitle;
@@ -52,7 +51,6 @@ class Incident {
 }
 
 // --- SHARED UI COMPONENTS ---
-
 class AppBackground extends StatelessWidget {
   final Widget child;
   const AppBackground({super.key, required this.child});
@@ -140,7 +138,6 @@ class DashboardPage extends StatelessWidget {
 
           final docs = snapshot.data!.docs;
 
-          // Logic for status counts
           int active = 0, progress = 0, resolved = 0;
           for (var doc in docs) {
             final data = doc.data() as Map<String, dynamic>;
@@ -730,7 +727,6 @@ class IncidentListView extends StatelessWidget {
   }
 }
 
-// Dummy classes to represent your routes
 class AllTasksPage extends StatefulWidget {
   const AllTasksPage({super.key});
 
@@ -739,11 +735,10 @@ class AllTasksPage extends StatefulWidget {
 }
 
 class _AllTasksPageState extends State<AllTasksPage> {
-  String _filter = 'All'; // Options: All, Ongoing, Responded
+  String _filter = 'All';
 
   @override
   Widget build(BuildContext context) {
-    // We fetch everything, then filter locally for better UI responsiveness
     final Stream<QuerySnapshot> _taskStream =
         FirebaseFirestore.instance.collection('crash_records').snapshots();
 
@@ -753,7 +748,6 @@ class _AllTasksPageState extends State<AllTasksPage> {
         backgroundColor: const Color(0xFF3B4CCF),
       ),
       body: AppBackground(
-        // Using the reusable background from previous cleanup
         child: Column(
           children: [
             _buildFilterRow(),
@@ -770,7 +764,6 @@ class _AllTasksPageState extends State<AllTasksPage> {
 
                   final docs = snapshot.data?.docs ?? [];
 
-                  // Apply local filtering based on the 'status' field in Firestore
                   final filteredDocs = docs.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
                     if (_filter == 'All') return true;
@@ -915,7 +908,7 @@ class EmergencyAlerts extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Emergency Alerts"),
-        backgroundColor: const Color(0xFF862134), // Emergency Red
+        backgroundColor: const Color(0xFF862134),
       ),
       body: Container(
         width: double.infinity,
@@ -1133,7 +1126,7 @@ class EmergencyAlerts extends StatelessWidget {
   }
 }
 
-// --- CUSTOM BOTTOM NAVIGATION BAR (FIXED) ---
+// --- CUSTOM BOTTOM NAVIGATION BAR ---
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
   const CustomBottomNavBar({super.key, required this.currentIndex});
