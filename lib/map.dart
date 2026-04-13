@@ -5,9 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'home.dart';
-import 'profile.dart';
-import 'settings.dart';
 import 'widgets/bottomnavbar.dart';
 
 class MapPage extends StatefulWidget {
@@ -301,7 +298,10 @@ class _MapPageState extends State<MapPage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: const Color(0xFF3130C0),
-        leading: Image.asset('assets/logo.png', width: 10, height: 10),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset('assets/logo.png'),
+        ),
         title: const Text('Map'),
         centerTitle: true,
       ),
