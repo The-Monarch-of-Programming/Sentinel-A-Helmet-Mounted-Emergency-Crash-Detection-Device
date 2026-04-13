@@ -3,6 +3,8 @@ import 'widgets/bottomnavbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -77,6 +79,172 @@ class _UserDashboardState extends State<UserDashboard> {
     );
   }
 
+  Future<void> _triggerManualSos() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    bool confirm = await _showSosConfirmDialog();
+    if (!confirm) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: Colors.redAccent),
+      ),
+    );
+
+    void _showErrorSnackBar(String message) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.orangeAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+
+    try {
+      // Get the map data instead of just a string
+      Map<String, dynamic> locationData = await _getCurrentLocation();
+
+      if (locationData.containsKey('error')) {
+        if (mounted) Navigator.pop(context);
+        _showErrorSnackBar(locationData['error']);
+        return;
+      }
+
+      await FirebaseFirestore.instance.collection('crash_records').add({
+        'date': FieldValue.serverTimestamp(),
+        'dispatcher_id': "",
+        'driver_id': user.uid,
+        'hospital': "",
+        'location': locationData['address'],
+        'latitude': locationData['latitude'],
+        'longitude': locationData['longitude'],
+        'respondedAt': null,
+        'status': "ongoing",
+        'severity': "Medium",
+      });
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("SOS Sent with precise GPS!"),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      print("SOS Error: $e");
+    }
+  }
+
+  Future<bool> _showSosConfirmDialog() async {
+    return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: const Color(0xFF1A1A40),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: const BorderSide(color: Colors.white10, width: 1),
+            ),
+            title: Row(
+              children: const [
+                Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+                SizedBox(width: 10),
+                Text(
+                  "Confirm SOS?",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            content: const Text(
+              "This will alert emergency responders to your current location. Do you wish to proceed?",
+              style: TextStyle(color: Colors.white70, fontSize: 16),
+            ),
+            actionsPadding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 10,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  "CANCEL",
+                  style: TextStyle(
+                    color: Colors.cyanAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text(
+                    "SEND SOS",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<Map<String, dynamic>> _getCurrentLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return {'error': "Location services disabled"};
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied)
+          return {'error': "Permission denied"};
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      String address = "Unknown Location";
+      try {
+        List<Placemark> placemarks = await placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+        Placemark place = placemarks[0];
+        address = "${place.street}, ${place.locality}";
+      } catch (_) {
+        address = "${position.latitude}, ${position.longitude}";
+      }
+
+      return {
+        'address': address,
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+      };
+    } catch (e) {
+      return {'error': e.toString()};
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,7 +273,16 @@ class _UserDashboardState extends State<UserDashboard> {
 
                     const SizedBox(height: 20),
 
-                    _buildStatCircle('Manual SOS', '', Colors.red, isSos: true),
+                    InkWell(
+                      onTap: () => _triggerManualSos(),
+                      borderRadius: BorderRadius.circular(110),
+                      child: _buildStatCircle(
+                        'Manual SOS',
+                        '',
+                        Colors.red,
+                        isSos: true,
+                      ),
+                    ),
 
                     const SizedBox(height: 40),
 
