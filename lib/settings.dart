@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'login.dart';
 import 'editprofile.dart';
+import 'aboutus.dart';
+import 'privatepolicy.dart';
+import 'termscon.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'widgets/bottomnavbar.dart';
@@ -265,7 +268,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 "About us",
                 style: TextStyle(color: Colors.white),
               ),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AboutUsPage(),
+                  ), // Replace with your actual class name
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.privacy_tip, color: Colors.white),
@@ -273,7 +283,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 "Privacy policy",
                 style: TextStyle(color: Colors.white),
               ),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PrivacyPolicyPage(),
+                  ), // Replace with your actual class name
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.article, color: Colors.white),
@@ -281,7 +298,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 "Terms and conditions",
                 style: TextStyle(color: Colors.white),
               ),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TermsAndConditionsPage(),
+                  ), // Replace with your actual class name
+                );
+              },
             ),
             const SizedBox(height: 30),
             ElevatedButton(
