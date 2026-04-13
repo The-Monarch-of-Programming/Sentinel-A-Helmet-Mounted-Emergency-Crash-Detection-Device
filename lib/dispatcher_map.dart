@@ -106,7 +106,7 @@ class _DispatcherMapPageState extends State<DispatcherMapPage> {
         currentIndex: 2,
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
-          if (index == 1) return;
+          if (index == 2) return;
           // Navigation Logic
           Widget page;
           switch (index) {
