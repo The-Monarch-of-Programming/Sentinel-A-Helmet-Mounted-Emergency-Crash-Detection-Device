@@ -107,36 +107,36 @@ class _DispatcherMapPageState extends State<DispatcherMapPage> {
           ),
         ],
       ),
-      // bottomNavigationBar: NavigationBar(
-      //   height: 60,
-      //   backgroundColor: Colors.lightBlue,
-      //   selectedIndex: 3,
-      //   onDestinationSelected: (index) {
-      //     if (index == 3) return;
-      //     if (index == 0) {
-      //       Navigator.pushReplacement(
-      //         context,
-      //         MaterialPageRoute(builder: (context) => const Dispatchersettingpage()),
-      //       );
-      //     } else if (index == 1) {
-      //       Navigator.pushReplacement(
-      //         context,
-      //         MaterialPageRoute(builder: (context) => const DispatcherApp()),
-      //       );
-      //     } else if (index == 2) {
-      //       Navigator.pushReplacement(
-      //         context,
-      //         MaterialPageRoute(builder: (context) => const DispatchUserProfile()),
-      //       );
-      //     }
-      //   },
-      //   destinations: const [
-      //     NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-      //     NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
-      //     NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-      //     NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
-      //   ],
-      // ),
+      bottomNavigationBar: NavigationBar(
+        height: 60,
+        backgroundColor: Colors.lightBlue,
+        selectedIndex: 3,
+        onDestinationSelected: (index) {
+          if (index == 3) return;
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const Dispatchersettingpage()),
+            );
+          } else if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const DispatcherApp()),
+            );
+          } else if (index == 2) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const DispatchUserProfile()),
+            );
+          }
+        },
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+          NavigationDestination(icon: Icon(Icons.home), label: 'Dashboard'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
+        ],
+      ),
     );
   }
 

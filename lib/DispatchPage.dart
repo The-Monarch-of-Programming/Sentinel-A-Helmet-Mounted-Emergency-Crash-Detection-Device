@@ -163,6 +163,7 @@ class DashboardPage extends StatelessWidget {
 
           return _DashboardContent(
             active: active,
+            progress: progress,
             resolved: resolved,
           );
         },
@@ -173,9 +174,10 @@ class DashboardPage extends StatelessWidget {
 }
 
 class _DashboardContent extends StatelessWidget {
-  final int active, resolved;
+  final int active, progress, resolved;
   const _DashboardContent({
     required this.active,
+    required this.progress,
     required this.resolved,
   });
 
@@ -232,6 +234,10 @@ class _DashboardContent extends StatelessWidget {
             children: [
               Expanded(
                 child: StatBox(label: "Active", value: "$active"),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: StatBox(label: "In Progress", value: "$progress"),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1142,14 +1148,14 @@ class CustomBottomNavBar extends StatelessWidget {
               ),
             );
             break;
-          // case 3:
-          //   Navigator.pushReplacement(
-          //     context,
-          //     MaterialPageRoute(
-          //       builder: (context) => const DispatcherMapPage(),
-          //     ),
-          //   );
-          //   break;
+          case 3:
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DispatcherMapPage(),
+              ),
+            );
+            break;
           default:
             break;
         }
@@ -1164,10 +1170,10 @@ class CustomBottomNavBar extends StatelessWidget {
           icon: Icon(Icons.account_circle),
           label: 'Profile',
         ),
-        // BottomNavigationBarItem(
-        //   icon: Icon(Icons.map),
-        //   label: 'Map',
-        // ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.map),
+          label: 'Map',
+        ),
       ],
     );
   }

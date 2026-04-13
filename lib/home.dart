@@ -70,7 +70,7 @@ class _UserDashboardState extends State<UserDashboard> {
             return _buildIncidentCard(
               data['location'] ?? 'Unknown Location',
               dateLabel,
-              data['severity'] ?? 'unknown',
+              data['status'] ?? 'unknown',
               data['hospital'] ?? '',
             );
           }).toList(),

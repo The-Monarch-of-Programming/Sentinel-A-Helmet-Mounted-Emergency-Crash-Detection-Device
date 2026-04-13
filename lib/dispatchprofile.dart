@@ -4,7 +4,6 @@ import '../login.dart';
 import '../dispatcheditprofile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dispatcher_map.dart';
 
 class DispatchUserProfile extends StatefulWidget {
   const DispatchUserProfile({super.key});
@@ -70,13 +69,11 @@ class _DispatchUserProfileState extends State<DispatchUserProfile> {
         ),
         title: const Text('Profile'),
         centerTitle: true,
-        actions: [
+        actions: <Widget>[
           IconButton(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const DispatcherMapPage()),
-            ),
+            onPressed: () {},
             icon: const Icon(Icons.location_on),
+            color: Colors.lightBlue,
           ),
         ],
       ),
