@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'aboutus.dart';
+import 'privatepolicy.dart';
+import 'termscon.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -110,7 +113,14 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
             const SizedBox(height: 30),
-            const Text("Notification Settings", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+            const Text(
+              "Profile Settings",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
             const SizedBox(height: 10),
             ListTile(leading: const Icon(Icons.edit, color: Colors.white), title: const Text("Edit profile", style: TextStyle(color: Colors.white)), onTap: () {}),
             ListTile(leading: const Icon(Icons.lock, color: Colors.white), title: const Text("Change password", style: TextStyle(color: Colors.white)), onTap: () {}),
@@ -128,24 +138,68 @@ class _SettingsPageState extends State<SettingsPage> {
                 );
               },
             ),
-            ValueListenableBuilder<bool>(
-              valueListenable: SettingsService.instance.isDarkMode,
-              builder: (context, isDarkMode, _) {
-                return SwitchListTile(
-                  title: const Text("Dark mode", style: TextStyle(color: Colors.white)),
-                  value: isDarkMode,
-                  activeColor: Colors.white,
-                  activeTrackColor: Colors.white24,
-                  onChanged: (value) { SettingsService.instance.setDarkMode(value); },
+            ListTile(
+              leading: const Icon(Icons.contacts, color: Colors.white),
+              title: const Text(
+                "Add emergency contact",
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: _addEmergencyContact,
+            ),
+            const Text(
+              "More",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ListTile(
+              leading: const Icon(Icons.info_outline, color: Colors.white),
+              title: const Text(
+                "About us",
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AboutUsPage(),
+                  ),
                 );
               },
             ),
-            const SizedBox(height: 20),
-            const Text("More", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 10),
-            ListTile(leading: const Icon(Icons.info_outline, color: Colors.white), title: const Text("About us", style: TextStyle(color: Colors.white)), onTap: () {}),
-            ListTile(leading: const Icon(Icons.privacy_tip, color: Colors.white), title: const Text("Privacy policy", style: TextStyle(color: Colors.white)), onTap: () {}),
-            ListTile(leading: const Icon(Icons.article, color: Colors.white), title: const Text("Terms and conditions", style: TextStyle(color: Colors.white)), onTap: () {}),
+            ListTile(
+              leading: const Icon(Icons.privacy_tip, color: Colors.white),
+              title: const Text(
+                "Privacy policy",
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PrivacyPolicyPage(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.article, color: Colors.white),
+              title: const Text(
+                "Terms and conditions",
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TermsAndConditionsPage(),
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 30),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
