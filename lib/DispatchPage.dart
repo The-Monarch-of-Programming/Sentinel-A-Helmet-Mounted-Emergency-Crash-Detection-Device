@@ -113,8 +113,9 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stream =
-        FirebaseFirestore.instance.collection('crash_records').snapshots();
+    final stream = FirebaseFirestore.instance
+        .collection('crash_records')
+        .snapshots();
 
     return Scaffold(
       appBar: AppBar(
@@ -152,10 +153,7 @@ class DashboardPage extends StatelessWidget {
             }
           }
 
-          return _DashboardContent(
-            active: active,
-            resolved: resolved,
-          );
+          return _DashboardContent(active: active, resolved: resolved);
         },
       ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
@@ -165,10 +163,7 @@ class DashboardPage extends StatelessWidget {
 
 class _DashboardContent extends StatelessWidget {
   final int active, resolved;
-  const _DashboardContent({
-    required this.active,
-    required this.resolved,
-  });
+  const _DashboardContent({required this.active, required this.resolved});
 
   @override
   Widget build(BuildContext context) {
@@ -246,8 +241,10 @@ class CrashDetailsPage extends StatelessWidget {
       return {"name": "Unknown", "phone": "N/A", "plate": "N/A"};
     }
     try {
-      DocumentSnapshot userDoc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       if (userDoc.exists) {
         final userData = userDoc.data() as Map<String, dynamic>;
         final List<dynamic> contacts = userData['emergencyContacts'] ?? [];
@@ -276,8 +273,10 @@ class CrashDetailsPage extends StatelessWidget {
       return "Awaiting Assignment";
     }
     try {
-      DocumentSnapshot userDoc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       return userDoc.exists ? (userDoc.get('name') ?? "Unknown") : "Not Found";
     } catch (e) {
       return "Error";
@@ -292,30 +291,15 @@ class CrashDetailsPage extends StatelessWidget {
       final String? currentUserUid = FirebaseAuth.instance.currentUser?.uid;
       if (currentUserUid == null) throw "You must be logged in.";
 
-      final messenger = ScaffoldMessenger.of(context);
-      final navigator = Navigator.of(context);
-
       await FirebaseFirestore.instance
           .collection('crash_records')
           .doc(details['id'])
           .update({
-        'status': 'responded',
-        'dispatcher_id': currentUserUid,
-        'hospital': selectedHospital,
-        'respondedAt': FieldValue.serverTimestamp(),
-      });
-
-      if (!context.mounted) return;
-
-      navigator.pop();
-
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text("Alert Resolved: Dispatched to $selectedHospital"),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+            'status': 'responded',
+            'dispatcher_id': currentUserUid,
+            'hospital': selectedHospital,
+            'respondedAt': FieldValue.serverTimestamp(),
+          });
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -324,6 +308,27 @@ class CrashDetailsPage extends StatelessWidget {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<void> sendHospitalSMS(String phone, String message) async {
+    final String cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri smsUri = Uri(
+      scheme: 'sms',
+      path: cleanPhone,
+      queryParameters: <String, String>{'body': message},
+    );
+
+    try {
+      if (await canLaunchUrl(smsUri)) {
+        await launchUrl(smsUri);
+      } else {
+        final String url =
+            "sms:$cleanPhone?body=${Uri.encodeComponent(message)}";
+        await launchUrl(Uri.parse(url));
+      }
+    } catch (e) {
+      debugPrint("Error launching SMS: $e");
     }
   }
 
@@ -368,17 +373,14 @@ class CrashDetailsPage extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-
-              final navigator = Navigator.of(context);
-              final messenger = ScaffoldMessenger.of(context);
-
               await _respondToIncident(context, tempSelection);
 
-              if (emergencyPhone != "No Number" && emergencyPhone != "N/A") {
+              if (emergencyPhone != "No Number" &&
+                  emergencyPhone != "N/A" &&
+                  emergencyPhone != "Error") {
                 final String customMessage =
                     "Sentinel Alert: $driverName has been involved in an emergency. "
                     "A responder has been dispatched and they are being sent to $tempSelection.";
-
                 sendHospitalSMS(emergencyPhone, customMessage);
               }
             },
@@ -387,28 +389,6 @@ class CrashDetailsPage extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Future<void> sendHospitalSMS(String phone, String message) async {
-    final String cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
-
-    final Uri smsUri = Uri(
-      scheme: 'sms',
-      path: cleanPhone,
-      queryParameters: <String, String>{'body': message},
-    );
-
-    try {
-      if (await canLaunchUrl(smsUri)) {
-        await launchUrl(smsUri);
-      } else {
-        final String url =
-            "sms:$cleanPhone?body=${Uri.encodeComponent(message)}";
-        await launchUrl(Uri.parse(url));
-      }
-    } catch (e) {
-      print("Error launching SMS: $e");
-    }
   }
 
   @override
@@ -420,122 +400,138 @@ class CrashDetailsPage extends StatelessWidget {
       ).format((details['date'] as Timestamp).toDate());
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text("Incident Details")),
-      body: AppBackground(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Card(
-            color: Colors.white.withOpacity(0.1),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(25),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Center(
-                    child: Icon(
-                      Icons.minor_crash_rounded,
-                      size: 60,
-                      color: Colors.orangeAccent,
-                    ),
-                  ),
-                  const Divider(height: 40, color: Colors.white24),
-                  _buildInfoTile("Date & Time", formattedDate),
-                  _buildInfoTile(
-                    "Location",
-                    details['location']?.toString() ?? "Unknown",
-                  ),
-                  FutureBuilder<Map<String, dynamic>>(
-                    future: _getDriverFullDetails(
-                      details['driver_id']?.toString(),
-                    ),
-                    builder: (context, snapshot) {
-                      final data = snapshot.data;
-                      final String driverName = data?['name'] ?? "Driver";
-                      final String phone =
-                          data?['emergency_phone'] ?? "No Number";
-                      final bool loading =
-                          snapshot.connectionState == ConnectionState.waiting;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildInfoTile(
-                            "Driver Name",
-                            data?['name'] ?? "Loading...",
-                            isLoading: loading,
-                          ),
-                          _buildInfoTile(
-                            "Vehicle Plate Number",
-                            data?['plate'] ?? "Loading...",
-                            isLoading: loading,
-                          ),
-                          _buildInfoTile(
-                            "Emergency Contact",
-                            data?['emergency_phone'] ?? "Loading...",
-                            isLoading: loading,
-                            isWarning:
-                                data?['emergency_phone'] == "No Contact Set",
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-                      );
-                    },
-                  ),
-                  FutureBuilder<String>(
-                    future: _getDispatcherName(
-                      details['dispatcher_id']?.toString(),
-                    ),
-                    builder: (context, snapshot) {
-                      String name = snapshot.data ?? "Loading...";
-                      return _buildInfoTile(
-                        "Assigned Dispatcher",
-                        name,
-                        isLoading:
-                            snapshot.connectionState == ConnectionState.waiting,
-                        isWarning: name.contains("Awaiting") ||
-                            name.contains("Not Found"),
-                      );
-                    },
-                  ),
-                  _buildInfoTile(
-                    "Target Hospital",
-                    (details['hospital'] == null || details['hospital'].isEmpty)
-                        ? "Not Yet Set"
-                        : details['hospital'],
-                    isWarning: details['hospital'] == null,
-                  ),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _getDriverFullDetails(details['driver_id']?.toString()),
+      builder: (context, snapshot) {
+        final data = snapshot.data;
+        final bool loading =
+            snapshot.connectionState == ConnectionState.waiting;
+        final String driverName = data?['name'] ?? "Driver";
+        final String emergencyPhone = data?['emergency_phone'] ?? "No Number";
+        final String plate = data?['plate'] ?? "N/A";
 
-                  const SizedBox(height: 20),
+        return Scaffold(
+          appBar: AppBar(title: const Text("Incident Details")),
 
-                  if (details['status'] == 'ongoing')
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.greenAccent,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.send_rounded),
-                        label: const Text(
-                          "RESPOND TO INCIDENT",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        onPressed: () => _showHospitalPicker(context, details['emergency_phone'] ?? "No Number", details['driver_id'] ?? "Driver"),
+          persistentFooterButtons: [
+            if (details['status'] == 'ongoing')
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.greenAccent,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                ],
+                    icon: const Icon(Icons.send_rounded),
+                    label: const Text(
+                      "RESPOND TO INCIDENT",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: loading
+                        ? null
+                        : () => _showHospitalPicker(
+                            context,
+                            emergencyPhone,
+                            driverName,
+                          ),
+                  ),
+                ),
+              ),
+          ],
+
+          body: Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: const Color(0xFF0D0D2B),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Card(
+                color: Colors.white.withOpacity(0.1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(25),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Center(
+                        child: Icon(
+                          Icons.minor_crash_rounded,
+                          size: 60,
+                          color: Colors.orangeAccent,
+                        ),
+                      ),
+                      const Divider(height: 40, color: Colors.white24),
+
+                      _buildInfoTile("Date & Time", formattedDate),
+                      _buildInfoTile(
+                        "Location",
+                        details['location']?.toString() ?? "Unknown",
+                      ),
+
+                      _buildInfoTile(
+                        "Driver Name",
+                        driverName,
+                        isLoading: loading,
+                      ),
+                      _buildInfoTile(
+                        "Vehicle Plate Number",
+                        plate,
+                        isLoading: loading,
+                      ),
+                      _buildInfoTile(
+                        "Emergency Contact",
+                        emergencyPhone,
+                        isLoading: loading,
+                        isWarning:
+                            emergencyPhone == "No Contact Set" ||
+                            emergencyPhone == "Error",
+                      ),
+
+                      FutureBuilder<String>(
+                        future: _getDispatcherName(
+                          details['dispatcher_id']?.toString(),
+                        ),
+                        builder: (context, dispSnapshot) {
+                          String dispName = dispSnapshot.data ?? "Loading...";
+                          return _buildInfoTile(
+                            "Assigned Dispatcher",
+                            dispName,
+                            isLoading:
+                                dispSnapshot.connectionState ==
+                                ConnectionState.waiting,
+                            isWarning:
+                                dispName.contains("Awaiting") ||
+                                dispName == "Error",
+                          );
+                        },
+                      ),
+
+                      _buildInfoTile(
+                        "Target Hospital",
+                        (details['hospital'] == null ||
+                                details['hospital'].isEmpty)
+                            ? "Not Yet Set"
+                            : details['hospital'],
+                        isWarning:
+                            details['hospital'] == null ||
+                            details['hospital'].isEmpty,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -578,47 +574,6 @@ class CrashDetailsPage extends StatelessWidget {
       ),
     );
   }
-}
-
-Widget _buildInfoTile(
-  String label,
-  String value, {
-  bool isWarning = false,
-  bool isLoading = false,
-}) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: const TextStyle(
-            color: Colors.cyanAccent,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
-        ),
-        const SizedBox(height: 4),
-        if (isLoading)
-          const SizedBox(
-            height: 20,
-            width: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-        else
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 17,
-              color: isWarning ? Colors.orangeAccent : Colors.white,
-              fontStyle: isWarning ? FontStyle.italic : FontStyle.normal,
-            ),
-          ),
-      ],
-    ),
-  );
 }
 
 // --- REUSABLE LIST VIEW ---
@@ -674,8 +629,9 @@ class IncidentListView extends StatelessWidget {
                       subtitle: Text(item['time'] ?? ''),
                       trailing: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              isEmergency ? Colors.red : Colors.blue,
+                          backgroundColor: isEmergency
+                              ? Colors.red
+                              : Colors.blue,
                         ),
                         onPressed: () => Navigator.push(
                           context,
@@ -709,8 +665,9 @@ class _AllTasksPageState extends State<AllTasksPage> {
 
   @override
   Widget build(BuildContext context) {
-    final Stream<QuerySnapshot> _taskStream =
-        FirebaseFirestore.instance.collection('crash_records').snapshots();
+    final Stream<QuerySnapshot> _taskStream = FirebaseFirestore.instance
+        .collection('crash_records')
+        .snapshots();
 
     return Scaffold(
       appBar: AppBar(
@@ -1155,10 +1112,7 @@ class CustomBottomNavBar extends StatelessWidget {
           icon: Icon(Icons.account_circle),
           label: 'Profile',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.map),
-          label: 'Map',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
       ],
     );
   }
