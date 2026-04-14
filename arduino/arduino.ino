@@ -70,7 +70,6 @@ void loop() {
     data[2]*data[2]
   );
 
-  // smoothing (UNCHANGED)
   filteredAcc = 0.7 * filteredAcc + 0.3 * totalAcc;
 
   severity = "NONE";
@@ -106,7 +105,6 @@ void loop() {
 
     float speed = gps.speed.isValid() ? gps.speed.kmph() : 0;
 
-    // ✅ Print severity (now includes NONE again)
     Serial.print("Severity: ");
     Serial.println(severity);
 
