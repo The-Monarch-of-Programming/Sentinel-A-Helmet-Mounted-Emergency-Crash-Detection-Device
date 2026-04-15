@@ -18,10 +18,68 @@ class DispatcherMapPage extends StatefulWidget {
 class _DispatcherMapPageState extends State<DispatcherMapPage> {
   final Completer<GoogleMapController> _controller = Completer();
   Set<Marker> _markers = {};
+  final Set<String> _knownOngoingIds = {};
+  bool _hasSeenMapSnapshot = false;
+  StreamSubscription<QuerySnapshot>? _crashSubscription;
 
   @override
   void initState() {
     super.initState();
+    _loadMarkersAndHospitals();
+    _crashSubscription = FirebaseFirestore.instance
+        .collection('crash_records')
+        .where('status', isEqualTo: 'ongoing')
+        .snapshots()
+        .listen(
+          _onOngoingCrashRecordsUpdate,
+          onError: (error) {
+            debugPrint(
+              'Dispatcher map crash notification stream error: $error',
+            );
+          },
+        );
+  }
+
+  @override
+  void dispose() {
+    _crashSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _onOngoingCrashRecordsUpdate(QuerySnapshot snapshot) {
+    final ids = snapshot.docs.map((doc) => doc.id).toSet();
+    if (!_hasSeenMapSnapshot) {
+      _knownOngoingIds.addAll(ids);
+      _hasSeenMapSnapshot = true;
+      return;
+    }
+
+    final newIds = ids.difference(_knownOngoingIds);
+    if (newIds.isEmpty) return;
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'A rider has sent an SOS',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'See Location',
+            textColor: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EmergencyAlerts()),
+              );
+            },
+          ),
+        ),
+      );
+    }
+    _knownOngoingIds.addAll(newIds);
     _loadMarkersAndHospitals();
   }
 
@@ -38,20 +96,23 @@ class _DispatcherMapPageState extends State<DispatcherMapPage> {
       for (final doc in querySnapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
         final LatLng location = LatLng(data['latitude'], data['longitude']);
-        markers.add(Marker(
-          markerId: MarkerId('crash_${doc.id}'),
-          position: location,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-          infoWindow: InfoWindow(
-            title: data['location'] ?? 'Crash Alert',
-            snippet: 'Status: ${data['status'] ?? 'Unknown'}',
+        markers.add(
+          Marker(
+            markerId: MarkerId('crash_${doc.id}'),
+            position: location,
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              BitmapDescriptor.hueRed,
+            ),
+            infoWindow: InfoWindow(
+              title: data['location'] ?? 'Crash Alert',
+              snippet: 'Status: ${data['status'] ?? 'Unknown'}',
+            ),
           ),
-        ));
+        );
       }
     } catch (e) {
       debugPrint('Error loading crash records: $e');
     }
-
 
     if (mounted) setState(() => _markers = markers);
   }
@@ -118,12 +179,10 @@ class _DispatcherMapPageState extends State<DispatcherMapPage> {
             //     ),
             //   );
             //   break;
-                  case 0:
+            case 0:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const DispatcherPage(),
-                ),
+                MaterialPageRoute(builder: (context) => const DispatcherPage()),
               );
               break;
             case 1:
@@ -156,10 +215,7 @@ class _DispatcherMapPageState extends State<DispatcherMapPage> {
             icon: Icon(Icons.account_circle),
             label: 'Profile',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map),
-            label: 'Map',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
         ],
       ),
     );
@@ -180,7 +236,10 @@ class _DispatcherMapPageState extends State<DispatcherMapPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: const Text(
                 'Ongoing Incidents & Emergency Alerts',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             Expanded(
@@ -191,7 +250,9 @@ class _DispatcherMapPageState extends State<DispatcherMapPage> {
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
-                    return const Center(child: Text('Could not load incidents'));
+                    return const Center(
+                      child: Text('Could not load incidents'),
+                    );
                   }
                   if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
@@ -199,7 +260,10 @@ class _DispatcherMapPageState extends State<DispatcherMapPage> {
                   final docs = snapshot.data!.docs;
                   if (docs.isEmpty) {
                     return const Center(
-                      child: Text('No active incidents', style: TextStyle(color: Colors.black54)),
+                      child: Text(
+                        'No active incidents',
+                        style: TextStyle(color: Colors.black54),
+                      ),
                     );
                   }
                   return ListView.builder(
@@ -207,20 +271,39 @@ class _DispatcherMapPageState extends State<DispatcherMapPage> {
                     itemCount: docs.length,
                     itemBuilder: (context, index) {
                       final data = docs[index].data() as Map<String, dynamic>;
-                      final bool isEmergency = (data['severity'] ?? '').toString().toLowerCase() == 'high';
-                      final String location = data['location'] ?? 'Unknown location';
+                      final bool isEmergency =
+                          (data['severity'] ?? '').toString().toLowerCase() ==
+                          'high';
+                      final String location =
+                          data['location'] ?? 'Unknown location';
                       final String time = data['date'] is Timestamp
-                          ? DateFormat('MMM d, h:mm a').format((data['date'] as Timestamp).toDate())
+                          ? DateFormat(
+                              'MMM d, h:mm a',
+                            ).format((data['date'] as Timestamp).toDate())
                           : 'Unknown time';
                       return ListTile(
                         dense: true,
                         minVerticalPadding: 4,
                         leading: CircleAvatar(
-                          backgroundColor: isEmergency ? Colors.red : Colors.orange,
-                          child: Icon(isEmergency ? Icons.warning : Icons.local_hospital, color: Colors.white, size: 18),
+                          backgroundColor: isEmergency
+                              ? Colors.red
+                              : Colors.orange,
+                          child: Icon(
+                            isEmergency ? Icons.warning : Icons.local_hospital,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                         ),
-                        title: Text(location, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                        subtitle: Text('$time • ${data['status']?.toString().toUpperCase() ?? 'ONGOING'}'),
+                        title: Text(
+                          location,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '$time • ${data['status']?.toString().toUpperCase() ?? 'ONGOING'}',
+                        ),
                         trailing: Text(
                           isEmergency ? 'EMERGENCY' : 'ONGOING',
                           style: TextStyle(

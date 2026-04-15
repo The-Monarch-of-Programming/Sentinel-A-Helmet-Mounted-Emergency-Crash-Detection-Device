@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -108,8 +109,84 @@ class StatBox extends StatelessWidget {
 
 // --- PAGES ---
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  final Set<String> _knownOngoingIds = {};
+  bool _hasSeenMapSnapshot = false;
+  StreamSubscription<QuerySnapshot>? _crashSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _crashSubscription = FirebaseFirestore.instance
+        .collection('crash_records')
+        .where('status', isEqualTo: 'ongoing')
+        .snapshots()
+        .listen(
+          _onOngoingCrashRecordsUpdate,
+          onError: (error) {
+            debugPrint('Dispatcher crash notification stream error: $error');
+          },
+        );
+  }
+
+  @override
+  void dispose() {
+    _crashSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _onOngoingCrashRecordsUpdate(QuerySnapshot snapshot) {
+    final ids = snapshot.docs.map((doc) => doc.id).toSet();
+    if (!_hasSeenMapSnapshot) {
+      _knownOngoingIds.addAll(ids);
+      _hasSeenMapSnapshot = true;
+      return;
+    }
+
+    final newIds = ids.difference(_knownOngoingIds);
+    if (newIds.isEmpty) return;
+
+    String location = 'Unknown location';
+    for (final doc in snapshot.docs) {
+      if (newIds.contains(doc.id)) {
+        final data = doc.data() as Map<String, dynamic>;
+        location = data['location']?.toString() ?? location;
+        break;
+      }
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'A rider has sent an SOS at $location',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'See Location',
+            textColor: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EmergencyAlerts()),
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    _knownOngoingIds.addAll(newIds);
+  }
 
   @override
   Widget build(BuildContext context) {
