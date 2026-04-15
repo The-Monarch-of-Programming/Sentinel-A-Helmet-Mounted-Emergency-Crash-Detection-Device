@@ -1,13 +1,14 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include "time.h"
+#include <math.h>  
 
 // UART from Arduino Uno
 HardwareSerial unoSerial(2); // RX2 = GPIO16
 
 // WIFI
-const char* ssid = "T.I.P.ian Student";
-const char* password = "";
+const char* ssid = "VirusInstaller_4G";
+const char* password = "D@J#A7845";
 
 // FIREBASE
 String projectId = "sentinel-d37fb";
@@ -16,9 +17,13 @@ String apiKey = "AIzaSyCJdTgtmY2KMM6YOXxzAMrshH859Sux-X8";
 String baseURL = "https://firestore.googleapis.com/v1/projects/" + projectId +
                  "/databases/(default)/documents/crash_records/";
 
-// NTP Time
+String deviceURL = "https://firestore.googleapis.com/v1/projects/" + projectId +
+                   "/databases/(default)/documents/devices/";
+
+String driverID = "qwbOd4ofXQTnQJ1m8PLlHxha2MQ2";
+
 const char* ntpServer = "pool.ntp.org";
-const long gmtOffset_sec = 28800; // Philippines UTC+8
+const long gmtOffset_sec = 28800;
 const int daylightOffset_sec = 0;
 
 void setup() {
@@ -35,7 +40,6 @@ void setup() {
 
   Serial.println("\nWiFi Connected!");
 
-  // Initialize time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 }
 
@@ -47,7 +51,6 @@ void loop() {
 
     Serial.println("Received: " + incomingData);
 
-    // ax,ay,az,speed,lat,lng,severity
     float ax, ay, az, speed, lat, lng;
     char severityChar[10];
 
@@ -58,16 +61,22 @@ void loop() {
     if (parsed == 7) {
       String severity = String(severityChar);
 
-      sendToFirestore(ax, ay, az, speed, lat, lng, severity);
+      String location = String(lat, 6) + "," + String(lng, 6);
+
+      sendToFirestore(ax, ay, az, speed, severity, location);
+
+      delay(200);
+
+      sendToDevices(ax, ay, az, lat, lng, severity);
+
     } else {
       Serial.println("Parsing failed!");
     }
   }
 }
 
-// SEND TO FIRESTORE
 void sendToFirestore(float ax, float ay, float az, float speed,
-                     float lat, float lng, String severity) {
+                     String severity, String location) {
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -76,53 +85,86 @@ void sendToFirestore(float ax, float ay, float az, float speed,
     http.begin(url);
     http.addHeader("Content-Type", "application/json");
 
-    // Google Maps Link
-    String mapsLink = "https://www.google.com/maps?q=" +
-                      String(lat, 6) + "," + String(lng, 6);
-
-    // Status Logic
+    // Status
     String status;
-    if (severity == "LOW") {
-      status = "RESPONDED";
-    } else if (severity == "MEDIUM" || severity == "HIGH") {
-      status = "ON GOING";
+    if (severity == "Low") {
+      status = "responded";
+    } else if (severity == "Medium" || severity == "High") {
+      status = "ongoing";
     } else {
-      status = "UNKNOWN";
+      status = "unknown";
     }
 
-    // Timestamp
+    // Time formatting
     struct tm timeinfo;
     String timestamp = "N/A";
 
     if (getLocalTime(&timeinfo)) {
-      char timeString[30];
-      strftime(timeString, sizeof(timeString), "%Y-%m-%d %H:%M:%S", &timeinfo);
-      timestamp = String(timeString);
-    }
+      char timeString[50];
+      strftime(timeString, sizeof(timeString),
+               "%B %d, %Y at %I:%M:%S %p", &timeinfo);
 
-    // JSON Payload
+      timestamp = String(timeString) + " UTC+8";
+    }
+    
     String jsonPayload = "{ \"fields\": {";
 
-    jsonPayload += "\"ax\": {\"doubleValue\": " + String(ax, 3) + "},";
-    jsonPayload += "\"ay\": {\"doubleValue\": " + String(ay, 3) + "},";
-    jsonPayload += "\"az\": {\"doubleValue\": " + String(az, 3) + "},";
-    jsonPayload += "\"speed\": {\"doubleValue\": " + String(speed, 2) + "},";
+    jsonPayload += "\"date\": {\"stringValue\": \"" + timestamp + "\"},";
+    jsonPayload += "\"dispatcher_id\": {\"stringValue\": \"\"},";
+    jsonPayload += "\"driver_id\": {\"stringValue\": \"" + driverID + "\"},";
+    jsonPayload += "\"hospital\": {\"stringValue\": \"\"},";
 
-    jsonPayload += "\"latitude\": {\"doubleValue\": " + String(lat, 6) + "},";
-    jsonPayload += "\"longitude\": {\"doubleValue\": " + String(lng, 6) + "},";
+    jsonPayload += "\"location\": {\"stringValue\": \"" + location + "\"},";
 
-    jsonPayload += "\"maps_link\": {\"stringValue\": \"" + mapsLink + "\"},";
+    jsonPayload += "\"respondedAt\": {\"nullValue\": null},";
 
     jsonPayload += "\"severity\": {\"stringValue\": \"" + severity + "\"},";
-    jsonPayload += "\"status\": {\"stringValue\": \"" + status + "\"},";
-    jsonPayload += "\"timestamp\": {\"stringValue\": \"" + timestamp + "\"}";
+    jsonPayload += "\"status\": {\"stringValue\": \"" + status + "\"}";
 
     jsonPayload += "} }";
 
     int httpResponseCode = http.POST(jsonPayload);
 
-    Serial.print("HTTP Response: ");
+    Serial.print("Crash Response: ");
     Serial.println(httpResponseCode);
+
+    http.end();
+  }
+}
+
+void sendToDevices(float ax, float ay, float az, float lat, float lng, String severity) {
+
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+
+    String url = deviceURL + "?key=" + apiKey;
+    http.begin(url);
+    http.addHeader("Content-Type", "application/json");
+
+    // Compute vector magnitude
+    float vectorMagnitude = sqrt(ax * ax + ay * ay + az * az);
+
+    String jsonPayload = "{ \"fields\": {";
+
+    jsonPayload += "\"driver_id\": {\"stringValue\": \"" + driverID + "\"},";
+
+    jsonPayload += "\"ax\": {\"doubleValue\": " + String(ax, 3) + "},";
+    jsonPayload += "\"ay\": {\"doubleValue\": " + String(ay, 3) + "},";
+    jsonPayload += "\"az\": {\"doubleValue\": " + String(az, 3) + "},";
+
+    jsonPayload += "\"severity\": {\"stringValue\": \"" + severity + "\"},";
+
+    jsonPayload += "\"vector_magnitude\": {\"doubleValue\": " + String(vectorMagnitude, 3) + "},";
+
+    jsonPayload += "\"latitude\": {\"doubleValue\": " + String(lat, 6) + "},";
+    jsonPayload += "\"longitude\": {\"doubleValue\": " + String(lng, 6) + "}";
+
+    jsonPayload += "} }";
+
+    int response = http.POST(jsonPayload);
+
+    Serial.print("Devices Response: ");
+    Serial.println(response);
 
     http.end();
   }
