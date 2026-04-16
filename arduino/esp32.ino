@@ -1,33 +1,41 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include "time.h"
+#include <math.h>
 
 HardwareSerial unoSerial(2);
 
+// WIFI
 const char* ssid = "VirusInstaller_4G";
 const char* password = "D@J#A7845";
 
+// FIREBASE
 String projectId = "sentinel-d37fb";
-String apiKey = "YOUR_API_KEY"; // PUT REAL KEY
+String apiKey = "YOUR_API_KEY";
 
 String crashURL = "https://firestore.googleapis.com/v1/projects/" + projectId +
-                  "/databases/(default)/documents/crash_records";
+                  "/databases/(default)/documents/crash_records?key=" + apiKey;
 
 String deviceURL = "https://firestore.googleapis.com/v1/projects/" + projectId +
                    "/databases/(default)/documents/devices/readings?key=" + apiKey;
 
 String driverID = "qwbOd4ofXQTnQJ1m8PLlHxha2MQ2";
 
-float ax, ay, az, speed, lat, lng;
-String severity = "";
-String status = "";
+// DATA
+float ax = 0, ay = 0, az = 0;
+float speed = 0;
+float lat = 0, lng = 0;
+String severity = "Low";
+String status = "idle";
+
+bool crashSent = false;
 
 String getTimestamp() {
   struct tm timeinfo;
 
   int retry = 0;
   while (!getLocalTime(&timeinfo) && retry < 5) {
-    delay(1000);
+    delay(500);
     retry++;
   }
 
@@ -35,7 +43,7 @@ String getTimestamp() {
 
   char buffer[100];
   strftime(buffer, sizeof(buffer),
-           "%B %d, %Y at %I:%M:%S %p UTC+8",
+           "%B %d, %Y %I:%M:%S %p UTC+8",
            &timeinfo);
 
   return String(buffer);
@@ -60,42 +68,50 @@ void setup() {
 
 void loop() {
 
-  if (!unoSerial.available()) return;
+  if (unoSerial.available()) {
 
-  String data = unoSerial.readStringUntil('\n');
-  data.trim();
+    String data = unoSerial.readStringUntil('\n');
+    data.trim();
 
-  if (data.length() == 0) return;
+    if (data.length() == 0) return;
 
-  Serial.println("RX: " + data);
+    char sev[10] = {0};
 
-  char sev[15] = {0};
+    int parsed = sscanf(data.c_str(),
+                        "%f,%f,%f,%f,%f,%f,%9s",
+                        &ax, &ay, &az, &speed, &lat, &lng, sev);
 
-  int parsed = sscanf(data.c_str(),
-                      "%f,%f,%f,%f,%f,%f,%14s",
-                      &ax, &ay, &az, &speed, &lat, &lng, sev);
+    if (parsed != 7) {
+      Serial.println("Parse FAILED");
+      return;
+    }
 
-  if (parsed != 7) {
-    Serial.println("Parse FAILED");
-    return;
+    severity = String(sev);
+
+    if (severity == "Low") status = "responded";
+    else if (severity == "Medium" || severity == "High") status = "ongoing";
+    else status = "idle";
+
+    Serial.print("AX: "); Serial.print(ax, 3);
+    Serial.print(" AY: "); Serial.print(ay, 3);
+    Serial.print(" AZ: "); Serial.print(az, 3);
+    Serial.print(" | LAT: "); Serial.print(lat, 6);
+    Serial.print(" LNG: "); Serial.print(lng, 6);
+    Serial.print(" | SEV: "); Serial.println(severity);
+
+    if ((severity == "Low" || severity == "Medium" || severity == "High") && !crashSent) {
+      sendCrash();
+      crashSent = true;
+    }
+
+    if (severity == "NONE") {
+      crashSent = false;
+    }
   }
 
-  severity = String(sev);
-
-  if (severity == "Low") {
-    status = "responded";
-  } else if (severity == "Medium" || severity == "High") {
-    status = "ongoing";
-  } else {
-    status = "unknown";
-  }
-
-  Serial.println("Severity: " + severity);
-  Serial.println("Status: " + status);
-
-  sendCrash();
-  delay(300);
   sendDevice();
+
+  delay(200);
 }
 
 void sendCrash() {
@@ -103,17 +119,12 @@ void sendCrash() {
   if (WiFi.status() != WL_CONNECTED) return;
 
   HTTPClient http;
-
-  String url = crashURL + "?key=" + apiKey;
-  http.begin(url);
+  http.begin(crashURL);
   http.addHeader("Content-Type", "application/json");
-  http.setTimeout(10000);
-
-  String timestamp = getTimestamp();
 
   String json = "{ \"fields\": {";
 
-  json += "\"date\": {\"stringValue\": \"" + timestamp + "\"},";
+  json += "\"date\": {\"stringValue\": \"" + getTimestamp() + "\"},";
   json += "\"dispatcher_id\": {\"stringValue\": \"\"},";
   json += "\"driver_id\": {\"stringValue\": \"" + driverID + "\"},";
   json += "\"hospital\": {\"stringValue\": \"\"},";
@@ -121,22 +132,18 @@ void sendCrash() {
   json += "\"latitude\": {\"stringValue\": \"" + String(lat, 6) + "\"},";
   json += "\"longitude\": {\"stringValue\": \"" + String(lng, 6) + "\"},";
 
-  json += "\"respondedAt\": {\"nullValue\": null},";
-
   json += "\"severity\": {\"stringValue\": \"" + severity + "\"},";
   json += "\"status\": {\"stringValue\": \"" + status + "\"}";
 
   json += "} }";
 
-  Serial.println("Crash JSON:");
+  Serial.println("\n[CRASH SENT]");
   Serial.println(json);
 
   int code = http.POST(json);
 
   Serial.print("Crash Response: ");
   Serial.println(code);
-
-  Serial.println(http.getString());
 
   http.end();
 }
@@ -145,34 +152,30 @@ void sendDevice() {
 
   if (WiFi.status() != WL_CONNECTED) return;
 
-  HTTPClient http;
+  float magnitude = sqrt(ax * ax + ay * ay + az * az);
 
+  HTTPClient http;
   http.begin(deviceURL);
   http.addHeader("Content-Type", "application/json");
-  http.setTimeout(10000);
-
-  float vectorMagnitude = sqrt(ax * ax + ay * ay + az * az);
 
   String json = "{ \"fields\": {";
 
-  json += "\"ax\": {\"doubleValue\": " + String(ax, 4) + "},";
-  json += "\"ay\": {\"doubleValue\": " + String(ay, 4) + "},";
-  json += "\"az\": {\"doubleValue\": " + String(az, 4) + "},";
+  json += "\"ax\": {\"doubleValue\": " + String(ax, 3) + "},";
+  json += "\"ay\": {\"doubleValue\": " + String(ay, 3) + "},";
+  json += "\"az\": {\"doubleValue\": " + String(az, 3) + "},";
+
+  json += "\"latitude\": {\"doubleValue\": " + String(lat, 6) + "},";
+  json += "\"longitude\": {\"doubleValue\": " + String(lng, 6) + "},";
+
   json += "\"severity\": {\"stringValue\": \"" + severity + "\"},";
-  json += "\"vector_magnitude\": {\"doubleValue\": " + String(vectorMagnitude, 4) + "}";
+  json += "\"vector_magnitude\": {\"doubleValue\": " + String(magnitude, 3) + "}";
 
   json += "} }";
 
-  Serial.println("Device JSON:");
-  Serial.println(json);
-
   int code = http.PATCH(json);
 
-  Serial.print("Device Response: ");
+  Serial.print("Device update: ");
   Serial.println(code);
-
-  String response = http.getString();
-  Serial.println(response);
 
   http.end();
 }
