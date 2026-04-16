@@ -11,7 +11,7 @@ const char* password = "D@J#A7845";
 
 // FIREBASE
 String projectId = "sentinel-d37fb";
-String apiKey = "YOUR_API_KEY";
+String apiKey = "AIzaSyCJdTgtmY2KMM6YOXxzAMrshH859Sux-X8";
 
 String crashURL = "https://firestore.googleapis.com/v1/projects/" + projectId +
                   "/databases/(default)/documents/crash_records?key=" + apiKey;
