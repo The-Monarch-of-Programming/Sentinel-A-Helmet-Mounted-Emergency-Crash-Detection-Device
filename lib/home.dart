@@ -14,6 +14,9 @@ class UserDashboard extends StatefulWidget {
 }
 
 class _UserDashboardState extends State<UserDashboard> {
+  bool _isLocked = false;
+  String? _frozenX, _frozenY, _frozenZ, _frozenSeverity;
+
   Widget _buildIncidentHistory() {
     final String? uid = FirebaseAuth.instance.currentUser?.uid;
 
@@ -269,7 +272,7 @@ class _UserDashboardState extends State<UserDashboard> {
                 child: Column(
                   children: [
                     const SizedBox(height: 30),
-                    _buildStatCircle('75%', 'Battery Life', Colors.lightBlue),
+                    _buildSensorReadings(),
 
                     const SizedBox(height: 20),
 
@@ -429,6 +432,199 @@ class _UserDashboardState extends State<UserDashboard> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSensorReadings() {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('devices')
+          .doc('readings')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || !snapshot.data!.exists)
+          return const SizedBox();
+
+        var data = snapshot.data!.data() as Map<String, dynamic>;
+        String currentSeverity = data['severity'] ?? "None";
+        String x = data['ax']?.toStringAsFixed(3) ?? "0.000";
+        String y = data['ay']?.toStringAsFixed(3) ?? "0.000";
+        String z = data['az']?.toStringAsFixed(3) ?? "0.000";
+
+        if (!_isLocked &&
+            (currentSeverity == "Medium" || currentSeverity == "High")) {
+          _frozenX = x;
+          _frozenY = y;
+          _frozenZ = z;
+          _frozenSeverity = currentSeverity;
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            setState(() => _isLocked = true);
+          });
+        }
+
+        if (_isLocked) {
+          return _buildLockedSensorUI(
+            _frozenX ?? x,
+            _frozenY ?? y,
+            _frozenZ ?? z,
+            _frozenSeverity ?? currentSeverity,
+          );
+        }
+
+        // Otherwise, show live updating UI
+        return _buildSensorUI(x, y, z, currentSeverity);
+      },
+    );
+  }
+
+  Widget _buildSensorUI(String x, String y, String z, String severity) {
+    Color severityColor;
+    switch (severity.toLowerCase()) {
+      case 'high':
+        severityColor = Colors.redAccent;
+        break;
+      case 'medium':
+        severityColor = Colors.orangeAccent;
+        break;
+      case 'low':
+        severityColor = Colors.greenAccent;
+        break;
+      default:
+        severityColor = Colors.cyanAccent;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: severityColor.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "LIVE SENSOR DATA",
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              _severityBadge(severity, severityColor),
+            ],
+          ),
+          const SizedBox(height: 15),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildAxisVal("AX", x),
+              _buildAxisVal("AY", y),
+              _buildAxisVal("AZ", z),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAxisVal(String label, String val) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.cyanAccent, fontSize: 10),
+        ),
+        Text(
+          val,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLockedSensorUI(String x, String y, String z, String severity) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.redAccent.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.redAccent, width: 2),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.lock_clock, color: Colors.redAccent, size: 20),
+              SizedBox(width: 8),
+              Text(
+                "MEDIUM OR HIGHER IMPACT SEVERITY DETECTED",
+                style: TextStyle(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12
+                ),
+              ),
+            ],
+          ),
+          const Divider(color: Colors.white12, height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildAxisVal("AX", x),
+              _buildAxisVal("AY", y),
+              _buildAxisVal("AZ", z),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+              ),
+              icon: const Icon(Icons.refresh),
+              label: const Text("RESET"),
+              onPressed: () {
+                setState(() {
+                  _isLocked = false;
+                  _frozenX = null;
+                  _frozenY = null;
+                  _frozenZ = null;
+                  _frozenSeverity = null;
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _severityBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
       ),
     );
   }

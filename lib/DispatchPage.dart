@@ -6,6 +6,7 @@ import 'dispatchprofile.dart';
 import 'dispatcher_map.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geocoding/geocoding.dart';
 
 class DispatcherPage extends StatelessWidget {
   const DispatcherPage({super.key});
@@ -313,6 +314,45 @@ class CrashDetailsPage extends StatelessWidget {
 
   const CrashDetailsPage({super.key, required this.details});
 
+  Future<String> _getOrUpdateAddress(
+    String docId,
+    String lat,
+    String lng,
+    String? currentLoc,
+  ) async {
+    // If we already have a readable address (not just coordinates), return it
+    if (currentLoc != null &&
+        currentLoc.isNotEmpty &&
+        !currentLoc.contains(RegExp(r'[0-9]+\.[0-9]+'))) {
+      return currentLoc;
+    }
+
+    try {
+      double latitude = double.parse(lat);
+      double longitude = double.parse(lng);
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        latitude,
+        longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark p = placemarks[0];
+        String address = "${p.street}, ${p.locality}, ${p.administrativeArea}";
+
+        await FirebaseFirestore.instance
+            .collection('crash_records')
+            .doc(docId)
+            .update({'location': address});
+
+        return address;
+      }
+    } catch (e) {
+      debugPrint("Geocoding failed: $e");
+    }
+    return "Lat: $lat, Lng: $lng";
+  }
+
   Future<Map<String, dynamic>> _getDriverFullDetails(String? uid) async {
     if (uid == null || uid.isEmpty || uid == "null") {
       return {"name": "Unknown", "phone": "N/A", "plate": "N/A"};
@@ -548,9 +588,23 @@ class CrashDetailsPage extends StatelessWidget {
                       const Divider(height: 40, color: Colors.white24),
 
                       _buildInfoTile("Date & Time", formattedDate),
-                      _buildInfoTile(
-                        "Location",
-                        details['location']?.toString() ?? "Unknown",
+                      
+                      FutureBuilder<String>(
+                        future: _getOrUpdateAddress(
+                          details['id'],
+                          details['latitude'].toString(),
+                          details['longitude'].toString(),
+                          details['location'],
+                        ),
+                        builder: (context, snapshot) {
+                          return _buildInfoTile(
+                            "Location",
+                            snapshot.data ?? "Fetching Address...",
+                            isLoading:
+                                snapshot.connectionState ==
+                                ConnectionState.waiting,
+                          );
+                        },
                       ),
 
                       _buildInfoTile(
