@@ -25,21 +25,17 @@ String driverID = "qwbOd4ofXQTnQJ1m8PLlHxha2MQ2";
 float ax = 0, ay = 0, az = 0;
 float speed = 0;
 float lat = 0, lng = 0;
-String severity = "Low";
+String severity = "None";
 String status = "idle";
 
 bool crashSent = false;
+unsigned long lastCrashTime = 0;
+int cooldown = 10000; // 10 seconds
 
 String getTimestamp() {
   struct tm timeinfo;
 
-  int retry = 0;
-  while (!getLocalTime(&timeinfo) && retry < 5) {
-    delay(500);
-    retry++;
-  }
-
-  if (retry >= 5) return "N/A";
+  if (!getLocalTime(&timeinfo)) return "N/A";
 
   char buffer[100];
   strftime(buffer, sizeof(buffer),
@@ -54,7 +50,6 @@ void setup() {
   unoSerial.begin(9600, SERIAL_8N1, 16, 17);
 
   WiFi.begin(ssid, password);
-
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -73,44 +68,56 @@ void loop() {
     String data = unoSerial.readStringUntil('\n');
     data.trim();
 
+    data.replace("\r", "");
+    data.replace("\n", "");
+
     if (data.length() == 0) return;
 
-    char sev[10] = {0};
+    // ===== SAFE PARSING =====
+    int i1 = data.indexOf(',');
+    int i2 = data.indexOf(',', i1 + 1);
+    int i3 = data.indexOf(',', i2 + 1);
+    int i4 = data.indexOf(',', i3 + 1);
+    int i5 = data.indexOf(',', i4 + 1);
+    int i6 = data.indexOf(',', i5 + 1);
 
-    int parsed = sscanf(data.c_str(),
-                        "%f,%f,%f,%f,%f,%f,%9s",
-                        &ax, &ay, &az, &speed, &lat, &lng, sev);
-
-    if (parsed != 7) {
+    if (i6 == -1) {
       Serial.println("Parse FAILED");
       return;
     }
 
-    severity = String(sev);
+    ax = data.substring(0, i1).toFloat();
+    ay = data.substring(i1 + 1, i2).toFloat();
+    az = data.substring(i2 + 1, i3).toFloat();
+    speed = data.substring(i3 + 1, i4).toFloat();
+    lat = data.substring(i4 + 1, i5).toFloat();
+    lng = data.substring(i5 + 1, i6).toFloat();
+    severity = data.substring(i6 + 1);
+    severity.trim();
 
+    // ===== STATUS =====
     if (severity == "Low") status = "responded";
     else if (severity == "Medium" || severity == "High") status = "ongoing";
     else status = "idle";
 
-    Serial.print("AX: "); Serial.print(ax, 3);
-    Serial.print(" AY: "); Serial.print(ay, 3);
-    Serial.print(" AZ: "); Serial.print(az, 3);
-    Serial.print(" | LAT: "); Serial.print(lat, 6);
-    Serial.print(" LNG: "); Serial.print(lng, 6);
-    Serial.print(" | SEV: "); Serial.println(severity);
+    Serial.println("Parsed OK");
 
-    if ((severity == "Low" || severity == "Medium" || severity == "High") && !crashSent) {
-      sendCrash();
-      crashSent = true;
+    // ===== CRASH SEND WITH COOLDOWN =====
+    if ((severity == "Low" || severity == "Medium" || severity == "High")) {
+
+      if (!crashSent || millis() - lastCrashTime > cooldown) {
+        sendCrash();
+        crashSent = true;
+        lastCrashTime = millis();
+      }
     }
 
-    if (severity == "NONE") {
+    if (severity == "None") {
       crashSent = false;
     }
   }
 
   sendDevice();
-
   delay(200);
 }
 
@@ -128,10 +135,8 @@ void sendCrash() {
   json += "\"dispatcher_id\": {\"stringValue\": \"\"},";
   json += "\"driver_id\": {\"stringValue\": \"" + driverID + "\"},";
   json += "\"hospital\": {\"stringValue\": \"\"},";
-
-  json += "\"latitude\": {\"stringValue\": \"" + String(lat, 6) + "\"},";
-  json += "\"longitude\": {\"stringValue\": \"" + String(lng, 6) + "\"},";
-
+  json += "\"latitude\": {\"doubleValue\": " + String(lat, 6) + "},";
+  json += "\"longitude\": {\"doubleValue\": " + String(lng, 6) + "},";
   json += "\"severity\": {\"stringValue\": \"" + severity + "\"},";
   json += "\"status\": {\"stringValue\": \"" + status + "\"}";
 
@@ -141,8 +146,6 @@ void sendCrash() {
   Serial.println(json);
 
   int code = http.POST(json);
-
-  Serial.print("Crash Response: ");
   Serial.println(code);
 
   http.end();
@@ -163,19 +166,13 @@ void sendDevice() {
   json += "\"ax\": {\"doubleValue\": " + String(ax, 3) + "},";
   json += "\"ay\": {\"doubleValue\": " + String(ay, 3) + "},";
   json += "\"az\": {\"doubleValue\": " + String(az, 3) + "},";
-
   json += "\"latitude\": {\"doubleValue\": " + String(lat, 6) + "},";
   json += "\"longitude\": {\"doubleValue\": " + String(lng, 6) + "},";
-
   json += "\"severity\": {\"stringValue\": \"" + severity + "\"},";
   json += "\"vector_magnitude\": {\"doubleValue\": " + String(magnitude, 3) + "}";
 
   json += "} }";
 
-  int code = http.PATCH(json);
-
-  Serial.print("Device update: ");
-  Serial.println(code);
-
+  http.PATCH(json);
   http.end();
 }
