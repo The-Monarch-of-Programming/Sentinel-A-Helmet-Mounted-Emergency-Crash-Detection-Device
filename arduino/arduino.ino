@@ -5,7 +5,7 @@
 
 MPU6050 mpu;
 TinyGPSPlus gps;
-SoftwareSerial gpsSerial(4, 5); // RX, TX
+SoftwareSerial gpsSerial(4, 5);
 
 int impactPin = 7;
 int ledPin = 13;
@@ -13,16 +13,13 @@ int ledPin = 13;
 int confirmCount = 0;
 int confirmThreshold = 4;
 
-float data[5];
+float data[3];
 
-float lowThreshold = 2;
-float mediumThreshold = 3;
-float highThreshold = 4;
+float lowThreshold = 1;
+float mediumThreshold = 2;
+float highThreshold = 3;
 
 float filteredAcc = 0;
-String severity = "Low";
-
-int satellites = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -36,29 +33,23 @@ void setup() {
   delay(1000);
 
   if (!mpu.testConnection()) {
-    Serial.println("MPU6050 connection FAILED");
     while (1);
   }
 }
 
 void loop() {
 
-  // READ GPS
   while (gpsSerial.available()) {
     gps.encode(gpsSerial.read());
   }
 
-  satellites = gps.satellites.value();
-
-  // IMPACT SENSOR
   int impact = digitalRead(impactPin);
 
   if (impact == LOW) confirmCount++;
-  else confirmCount = 1;
+  else confirmCount = 0;
 
   bool impactDetected = (confirmCount >= confirmThreshold);
 
-  // MPU6050
   int16_t ax, ay, az;
   mpu.getAcceleration(&ax, &ay, &az);
 
@@ -73,41 +64,28 @@ void loop() {
   );
 
   filteredAcc = 0.7 * filteredAcc + 0.3 * totalAcc;
+  String severity = "None"; 
 
-  if (filteredAcc > highThreshold) {
-    severity = "High";
-  } 
-  else if (filteredAcc > mediumThreshold) {
-    severity = "Medium";
-  }
-  else if (filteredAcc > lowThreshold) {
-    severity = "Low";
-  }
-  else {
-    severity = "None";
+  if (impactDetected) {
+    if (filteredAcc > highThreshold) severity = "High";
+    else if (filteredAcc > mediumThreshold) severity = "Medium";
+    else severity = "Low";
   }
 
   digitalWrite(ledPin, impactDetected ? HIGH : LOW);
 
-  // GPS VALUES
-  float lat = 0;
-  float lng = 0;
-
-  if (gps.location.isValid()) {
-    lat = gps.location.lat();
-    lng = gps.location.lng();
-  }
-
+  float lat = gps.location.isValid() ? gps.location.lat() : 0;
+  float lng = gps.location.isValid() ? gps.location.lng() : 0;
   float speed = gps.speed.isValid() ? gps.speed.kmph() : 0;
-
-  Serial.print(data[0]); Serial.print(",");
-  Serial.print(data[1]); Serial.print(",");
-  Serial.print(data[2]); Serial.print(",");
-  Serial.print(speed); Serial.print(",");
+ 
+  Serial.print(data[0], 3); Serial.print(",");
+  Serial.print(data[1], 3); Serial.print(",");
+  Serial.print(data[2], 3); Serial.print(",");
+  Serial.print(speed, 2); Serial.print(",");
   Serial.print(lat, 6); Serial.print(",");
   Serial.print(lng, 6); Serial.print(",");
-  
   Serial.println(severity);
 
-  delay(500);
+  delay(300);
+
 }
